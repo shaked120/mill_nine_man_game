@@ -226,10 +226,7 @@ public class AlphaBetaPruning extends AbstractPlayer {
 
         return currentBestMove;
 
-//		List<Move> moves = boardState.getValidMoves(moveEvaluationFunction);
-//		Random random = new Random();
-//
-//		return moves.get(random.nextInt(moves.size()));
+
     }
 
     public synchronized void terminateSearch() {
