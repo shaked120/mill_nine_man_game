@@ -17,25 +17,25 @@ public class AlphaBetaPruning extends AbstractPlayer {
     private final int maxTime;
     private long startTime;
     private final Map<UUID, BoardStateValue> transpositionTable;
-    private AbstractJump currentBestMove;
-    private int currentBestMoveValue;
-    private final MoveEvaluationFunction moveEvaluationFunction;
+    private AbstractJump currentBestJump;
+    private int currentBestJumpValue;
+    private final JumpEvaluationFunction JumpEvaluationFunction;
     private Board currentBoard;
-    private boolean doTerminateMove;
+    private boolean doTerminateJump;
 
     public AlphaBetaPruning(Board boardState, int maxDepth, int maxTime, Color color) {
         super(color);
         this.board = boardState;
         this.maxDepth = maxDepth;
         this.maxTime = maxTime;
-        this.moveEvaluationFunction = new SimpleMoveEvaluationFunction();
+        this.JumpEvaluationFunction = new SimpleJumpEvaluationFunction();
         this.transpositionTable = new HashMap<>();
-        this.doTerminateMove = false;
+        this.doTerminateJump = false;
 
         this.currentBoard = null;
         this.startTime = 0;
-        this.currentBestMove = null;
-        currentBestMoveValue = -INFINITY;
+        this.currentBestJump = null;
+        currentBestJumpValue = -INFINITY;
     }
 
     public void setBoard(Board board) {
@@ -46,7 +46,7 @@ public class AlphaBetaPruning extends AbstractPlayer {
         return currentBoard;
     }
 
-    private int getNumberOfAdjacentMoves(char playerToken) {
+    private int getNumberOfAdjacentJumps(char playerToken) {
         int result = 0;
 
         for (int i = 0; i < Board.NUMBER_OF_POSITIONS; i++) {
@@ -118,7 +118,7 @@ public class AlphaBetaPruning extends AbstractPlayer {
         int result = 0;
 
         result += 10 * (currentBoard.howManyMenCurrentPlayer() - currentBoard.howManyMenOtherPlayer());
-        result += 2 * (getNumberOfAdjacentMoves(currentBoard.getCurrentPlayer().getToken()) - getNumberOfAdjacentMoves(currentBoard.getOtherPlayer().getToken()));
+        result += 2 * (getNumberOfAdjacentJumps(currentBoard.getCurrentPlayer().getToken()) - getNumberOfAdjacentJumps(currentBoard.getOtherPlayer().getToken()));
         result += 8 * (getNumberOfMills(currentBoard.getCurrentPlayer().getToken()) - getNumberOfMills(currentBoard.getOtherPlayer().getToken()));
         //result += 2 * (getNumberOfFormableMills(currentBoard.getCurrentPlayer()) - getNumberOfFormableMills(currentBoard.getOtherPlayer()));
 
@@ -127,8 +127,8 @@ public class AlphaBetaPruning extends AbstractPlayer {
 
     int hits = 0;
     private int alphaBetaPrunningSearch(int alpha, int beta, int currentDepth, int remainingDepth) {
-        if ((System.currentTimeMillis() - startTime > maxTime && currentBestMove != null) || doTerminateMove) {
-            doTerminateMove = false;
+        if ((System.currentTimeMillis() - startTime > maxTime && currentBestJump != null) || doTerminateJump) {
+            doTerminateJump = false;
             return END_SEARCH;
         }
 
@@ -145,31 +145,31 @@ public class AlphaBetaPruning extends AbstractPlayer {
             if (!(boardComputedValue.couldHaveBeenCutDeeper() || boardComputedValue.hasBeenCut())
                     || alpha >= beta) {
                 if (currentDepth == 0) {
-                    currentBestMove = boardComputedValue.getFoundBestMove();
-                    currentBestMoveValue = boardComputedValue.getValue();
+                    currentBestJump = boardComputedValue.getFoundBestJump();
+                    currentBestJumpValue = boardComputedValue.getValue();
                 }
 
                 return boardComputedValue.getValue();
             }
         }
 
-        List<AbstractJump> validMoves = currentBoard.getValidMoves(moveEvaluationFunction);
-        if (currentBoard.howManyMenCurrentPlayer() < 3 || validMoves.isEmpty()) {
+        List<AbstractJump> validJumps = currentBoard.getValidJumps(JumpEvaluationFunction);
+        if (currentBoard.howManyMenCurrentPlayer() < 3 || validJumps.isEmpty()) {
             return -WIN_BOARD_VALUE;
         }
 
         if (remainingDepth == 0) {
             return evaluateCurrentBoard();
         } else {
-            AbstractJump nodeBestMove = null;
+            AbstractJump nodeBestJump = null;
             int nodeBestValue = -INFINITY;
 
-            for (AbstractJump move : validMoves) {
-                currentBoard.makeMove(move);
+            for (AbstractJump jump : validJumps) {
+                currentBoard.makeJump(jump);
 
                 int value = -alphaBetaPrunningSearch(-beta, -alpha, currentDepth + 1, remainingDepth -1);
 
-                currentBoard.undoMove(move);
+                currentBoard.undoJump(jump);
 
                 if (Math.abs(value) == END_SEARCH) {
                     return END_SEARCH;
@@ -177,15 +177,15 @@ public class AlphaBetaPruning extends AbstractPlayer {
 
                 if (value > nodeBestValue) {
                     nodeBestValue = value;
-                    nodeBestMove = move;
+                    nodeBestJump = jump;
                 }
 
                 if (value > alpha) {
                     alpha = value;
 
                     if (currentDepth == 0) {
-                        currentBestMove = move;
-                        currentBestMoveValue = alpha;
+                        currentBestJump = jump;
+                        currentBestJumpValue = alpha;
                     }
                 }
 
@@ -194,43 +194,43 @@ public class AlphaBetaPruning extends AbstractPlayer {
                 }
             }
 
-            transpositionTable.put(currentBoard.getBoardID(), new BoardStateValue(nodeBestValue, remainingDepth, nodeBestMove, alpha >= beta, nodeBestValue < alpha));
+            transpositionTable.put(currentBoard.getBoardID(), new BoardStateValue(nodeBestValue, remainingDepth, nodeBestJump, alpha >= beta, nodeBestValue < alpha));
 
             return nodeBestValue;
         }
     }
 
-    public AbstractJump searchForBestMove() {
-        currentBestMove = null;
+    public AbstractJump searchForBestJump() {
+        currentBestJump = null;
         startTime = System.currentTimeMillis();
         currentBoard = new Board(board);
-        currentBestMoveValue = -INFINITY;
-        AbstractJump prevBestMove = currentBestMove;
-        int prevBestMoveValue = currentBestMoveValue;
+        currentBestJumpValue = -INFINITY;
+        AbstractJump prevBestJump = currentBestJump;
+        int prevBestJumpValue = currentBestJumpValue;
 
         for (int depth = Math.min(2, maxDepth); depth <= maxDepth; depth += 2) {
             int value = alphaBetaPrunningSearch(-INFINITY, INFINITY, 0, depth);
 
             if (Math.abs(value) == END_SEARCH) {
-                if (currentBestMoveValue <= prevBestMoveValue) {
-                    currentBestMove = prevBestMove;
-                    currentBestMoveValue = prevBestMoveValue;
+                if (currentBestJumpValue <= prevBestJumpValue) {
+                    currentBestJump = prevBestJump;
+                    currentBestJumpValue = prevBestJumpValue;
                 }
 
                 break;
             }
 
-            prevBestMove = currentBestMove;
-            prevBestMoveValue = value;
+            prevBestJump = currentBestJump;
+            prevBestJumpValue = value;
         }
 
-        return currentBestMove;
+        return currentBestJump;
 
 
     }
 
     public synchronized void terminateSearch() {
-        doTerminateMove = true;
+        doTerminateJump = true;
     }
 
     @Override

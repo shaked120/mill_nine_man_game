@@ -18,9 +18,9 @@ public class NineMensMorrisGUI extends JFrame {
 	private JTextField maxDepthTextField;
 	private final JLabel statusLabel;
 	private AlphaBetaPruning solver;
-	private volatile MoveExecutorCallback moveExecutor;
+	private volatile JumpExecutorCallback jumpExecutor;
 
-	private class MoveExecutor implements MoveExecutorCallback {
+	private class JumpExecutor implements JumpExecutorCallback {
 		private boolean terminate = false;
 		
 		public synchronized void terminate() {
@@ -29,12 +29,12 @@ public class NineMensMorrisGUI extends JFrame {
 		}
 		
 		@Override
-		public synchronized void makeMove(AbstractJump move) {
+		public synchronized void makeJump(AbstractJump jump) {
 			if (terminate) {
 				return;
 			}
 
-			currentGame.makeMove(move);
+			currentGame.makeJump(jump);
 			boardPanel.repaint();
 			
 			if (currentGame.hasCurrentPlayerLost()) {
@@ -44,31 +44,31 @@ public class NineMensMorrisGUI extends JFrame {
 					statusLabel.setText("You lost!");
 				}
 			} else if (currentGame.getCurrentPlayer().getColor() == Color.White) {
-				statusLabel.setText("Making move...");
+				statusLabel.setText("Making jump...");
 				
 				new Thread(() -> {
-					AbstractJump move1 = solver.searchForBestMove();
-					MoveExecutor.this.makeMove(move1);
+					AbstractJump jump1 = solver.searchForBestJump();
+					JumpExecutor.this.makeJump(jump1);
 				}).start();
 			} else {
-				statusLabel.setText("Your move");
-				boardPanel.makeMove();
+				statusLabel.setText("Your jump");
+				boardPanel.makeJump();
 			}
 		}
 	}
 	
 	private void startNewGame() {
-		if (moveExecutor != null) {
-			moveExecutor.terminate();
+		if (jumpExecutor != null) {
+			jumpExecutor.terminate();
 		}
 
 		currentGame = Board.clearBoard();
-		moveExecutor = new MoveExecutor();
-		boardPanel.setBoard(currentGame, moveExecutor);
-		statusLabel.setText("Your move");
+		jumpExecutor = new JumpExecutor();
+		boardPanel.setBoard(currentGame, jumpExecutor);
+		statusLabel.setText("Your jump");
 
 		solver = (AlphaBetaPruning) currentGame.getOtherPlayer();
-		boardPanel.makeMove();
+		boardPanel.makeJump();
 	}
 	
 	public NineMensMorrisGUI() {
@@ -83,7 +83,7 @@ public class NineMensMorrisGUI extends JFrame {
 		newGameButton = new JButton("New game");
 		newGameButton.addActionListener(e -> startNewGame());
 		controls.add(newGameButton);
-		controls.add(new JLabel("Max move time:"));
+		controls.add(new JLabel("Max jump time:"));
 		maxTimeTextField = new JTextField(3);
 		maxTimeTextField.setText("30");
 		controls.add(maxTimeTextField);
@@ -92,7 +92,7 @@ public class NineMensMorrisGUI extends JFrame {
 		maxDepthTextField.setText("15");
 		controls.add(maxDepthTextField);
 		controls.add(new JLabel("Status:"));
-		statusLabel = new JLabel("Your move");
+		statusLabel = new JLabel("Your jump");
 		controls.add(statusLabel);
 		
 		add(controls, BorderLayout.SOUTH);

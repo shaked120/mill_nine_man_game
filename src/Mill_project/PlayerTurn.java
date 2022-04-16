@@ -6,14 +6,14 @@ public class PlayerTurn {
     ArrayList<AbstractJump> actions = new ArrayList<>();
 
     public PlayerTurn(ManSoldier man) {
-        makeMovePhaseOne(man);
+        makeJumpPhaseOne(man);
     }
 
     public PlayerTurn() {
-        makeMovePhaseTwo();
+        makeJumpPhaseTwo();
     }
 
-    public void makeMovePhaseTwo() {
+    public void makeJumpPhaseTwo() {
         boolean success = false;
         while (!success) {
             int menLeft = Board.getInstance().howManyMenCurrentPlayer();
@@ -34,15 +34,15 @@ public class PlayerTurn {
         }
     }
 
-    public void makeMovePhaseOne(ManSoldier m) {
+    public void makeJumpPhaseOne(ManSoldier m) {
         boolean success = false;
         while (!success) {
             System.out.println("Choose a house for a " + MainGame.getInstance().currentTurn.getColor() + " Man:");
             int destination = MainGame.getInstance().currentTurn.readInt();
-            PlaceMan move = new PlaceMan();
-            if (move.check(destination, m)) {
-                move.exec();
-                actions.add(move);
+            PlaceMan jump = new PlaceMan();
+            if (jump.check(destination, m)) {
+                jump.exec();
+                actions.add(jump);
                 makeTake(destination, actions);
                 success = true;
             }
@@ -55,45 +55,45 @@ public class PlayerTurn {
             System.out.println("You can take an opponent man out. "
                     + "\nChoose a house that contains an opponent man:");
             src = MainGame.getInstance().currentTurn.readInt();
-            RemoveMan move = new RemoveMan(Board.getInstance().getHouses().get(src));
-            while (!move.check(src)) {
+            RemoveMan jump = new RemoveMan(Board.getInstance().getHouses().get(src));
+            while (!jump.check(src)) {
                 src = MainGame.getInstance().currentTurn.readInt();
             }
-            move.exec();
-            actions.add(move);
+            jump.exec();
+            actions.add(jump);
         }
     }
 
     boolean makeSlide() {
         boolean checking = false;
-        SlideMill move = new SlideMill();
+        SlideMill jump = new SlideMill();
         while (!checking) {
             System.out.println("Slide one of your men from its house."
                     + " Choose a house that contains your man and a direction to slide to:"
-                    + "\n{Up:" + move.UP + ", Down:" + move.DOWN + ", Right:" + move.RIGHT + ", left:" + move.LEFT + "}");
+                    + "\n{Up:" + jump.UP + ", Down:" + jump.DOWN + ", Right:" + jump.RIGHT + ", left:" + jump.LEFT + "}");
             int src = MainGame.getInstance().currentTurn.readInt();
             int dir = MainGame.getInstance().currentTurn.readInt();
-            checking = move.check(src, dir);
+            checking = jump.check(src, dir);
         }
-        move.exec();
-        actions.add(move);
-        makeTake(move.getDestination().getId(), actions);
+        jump.exec();
+        actions.add(jump);
+        makeTake(jump.getDestination().getId(), actions);
         return true;
     }
 
     boolean makeHop() {
         boolean checking = false;
-        Jump move = new Jump();
+        Jump jump = new Jump();
         while (!checking) {
             System.out.println("You can jump. "
                     + "Choose a house that contains your man and a destination house:");
             int src = MainGame.getInstance().currentTurn.readInt();
             int dst = MainGame.getInstance().currentTurn.readInt();
-            checking = move.check(src, dst);
+            checking = jump.check(src, dst);
         }
-        move.exec();
-        actions.add(move);
-        makeTake(move.getDestination().getId(), actions);
+        jump.exec();
+        actions.add(jump);
+        makeTake(jump.getDestination().getId(), actions);
         return true;
     }
 }

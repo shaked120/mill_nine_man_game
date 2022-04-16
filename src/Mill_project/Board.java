@@ -1,7 +1,7 @@
 package Mill_project;
 
 import algoritmas.AlphaBetaPruning;
-import algoritmas.ValuedMove;
+import algoritmas.ValuedJump;
 
 import java.util.*;
 
@@ -140,7 +140,7 @@ public class Board {
     }
 
     public boolean hasCurrentPlayerLost() {
-        return howManyMenCurrentPlayer() < 3 || getValidMoves(null).isEmpty();
+        return howManyMenCurrentPlayer() < 3 || getValidJumps(null).isEmpty();
     }
 
     public int howManyMenCurrentPlayer() {
@@ -274,31 +274,31 @@ public class Board {
         position.setMan(HouseInBoard.empty);
     }
 
-    public void makeMove(AbstractJump move) {
-        if (move.getSource() != null) {
-            removeFromBoard(move.getSource());
+    public void makeJump(AbstractJump jump) {
+        if (jump.getSource() != null) {
+            removeFromBoard(jump.getSource());
         }
 
-        putOnBoard(move.getDestination(), currentPlayer);
+        putOnBoard(jump.getDestination(), currentPlayer);
 
-        if (move instanceof RemoveMan) {
-            removeFromBoard(move.getSource());
+        if (jump instanceof RemoveMan) {
+            removeFromBoard(jump.getSource());
         }
 
         togglePlayer();
     }
 
-    public void undoMove(AbstractJump move) {
+    public void undoJump(AbstractJump jump) {
         togglePlayer();
 
-        if (move.getSource() != null) {
-            putOnBoard(move.getSource(), currentPlayer);
+        if (jump.getSource() != null) {
+            putOnBoard(jump.getSource(), currentPlayer);
         }
 
-        removeFromBoard(move.getDestination());
+        removeFromBoard(jump.getDestination());
 
-        if (move instanceof RemoveMan) {
-            putOnBoard(move.getSource(), otherPlayer);
+        if (jump instanceof RemoveMan) {
+            putOnBoard(jump.getSource(), otherPlayer);
         }
     }
 
@@ -334,15 +334,15 @@ public class Board {
         return true;
     }
 
-    private void addPossibleMillTakes(SortedSet<ValuedMove> sortedMoves,
-                                      AbstractJump move, MoveEvaluationFunction evaluationFunction) {
+    private void addPossibleMillTakes(SortedSet<ValuedJump> sortedJumps,
+                                      AbstractJump jump, JumpEvaluationFunction evaluationFunction) {
         boolean areAllOtherPlayerPiecesFromMill = areAllPiecesFromMill(getOtherPlayer());
 
         for (int i = 0; i < houses.size(); i++) {
             if (houses.get(i).getMan().getColor() == getOtherPlayer().getColor()) {
                 if (areAllOtherPlayerPiecesFromMill || !doesPieceCompleteMill(-1, i, getOtherPlayer())) {
-                    move = new Jump(move.getSource(), move.getDestination());
-                    sortedMoves.add(new ValuedMove(move, evaluationFunction.evaluate(this, move)));
+                    jump = new Jump(jump.getSource(), jump.getDestination());
+                    sortedJumps.add(new ValuedJump(jump, evaluationFunction.evaluate(this, jump)));
                 }
             }
         }
@@ -352,21 +352,21 @@ public class Board {
         return NUMBER_OF_STARTING_PIECES - soldiers.get(currentPlayer.getColor()).size();
     }
 
-    public List<AbstractJump> getValidMoves(MoveEvaluationFunction evaluationFunction) {
+    public List<AbstractJump> getValidJumps(JumpEvaluationFunction evaluationFunction) {
         if (evaluationFunction == null) {
             evaluationFunction = (board, jump) -> 0;
         }
 
-        SortedSet<ValuedMove> sortedMoves = new TreeSet<>();
+        SortedSet<ValuedJump> sortedJumps = new TreeSet<>();
 
         if (getUnputPiecesOfCurrentPlayer() > 0) {
             for (int i = 0; i < houses.size(); i++) {
                 if (houses.get(i).isEmpty()) {
-                    Jump move = new Jump();
+                    Jump jump = new Jump();
                     if (doesPieceCompleteMill(-1, i, currentPlayer)) {
-                        addPossibleMillTakes(sortedMoves, move, evaluationFunction);
+                        addPossibleMillTakes(sortedJumps, jump, evaluationFunction);
                     } else {
-                        sortedMoves.add(new ValuedMove(move, evaluationFunction.evaluate(this, move)));
+                        sortedJumps.add(new ValuedJump(jump, evaluationFunction.evaluate(this, jump)));
                     }
                 }
             }
@@ -376,11 +376,11 @@ public class Board {
                     if (houses.get(i).getMan().getColor() == currentPlayer.getColor()) {
                         for (int neighbour : POSITION_TO_NEIGHBOURS.get(i)) {
                             if (houses.get(neighbour).isEmpty()) {
-                                Jump move = new Jump(houses.get(i), houses.get(neighbour));
+                                Jump jump = new Jump(houses.get(i), houses.get(neighbour));
                                 if (doesPieceCompleteMill(i, neighbour, currentPlayer)) {
-                                    addPossibleMillTakes(sortedMoves, move, evaluationFunction);
+                                    addPossibleMillTakes(sortedJumps, jump, evaluationFunction);
                                 } else {
-                                    sortedMoves.add(new ValuedMove(move, evaluationFunction.evaluate(this, move)));
+                                    sortedJumps.add(new ValuedJump(jump, evaluationFunction.evaluate(this, jump)));
                                 }
                             }
                         }
@@ -391,11 +391,11 @@ public class Board {
                     if (houses.get(i).getMan().getColor() == currentPlayer.getColor()) {
                         for (int j = 0; j < houses.size(); j++) {
                             if (houses.get(j).isEmpty()) {
-                                Jump move = new Jump(houses.get(i), houses.get(j));
+                                Jump jump = new Jump(houses.get(i), houses.get(j));
                                 if (doesPieceCompleteMill(i, j, currentPlayer)) {
-                                    addPossibleMillTakes(sortedMoves, move, evaluationFunction);
+                                    addPossibleMillTakes(sortedJumps, jump, evaluationFunction);
                                 } else {
-                                    sortedMoves.add(new ValuedMove(move, evaluationFunction.evaluate(this, move)));
+                                    sortedJumps.add(new ValuedJump(jump, evaluationFunction.evaluate(this, jump)));
                                 }
                             }
                         }
@@ -406,24 +406,24 @@ public class Board {
 
         List<AbstractJump> result = new ArrayList<>();
 
-        for (ValuedMove valuedMove : sortedMoves) {
-            result.add(valuedMove.getMove());
+        for (ValuedJump valuedJump : sortedJumps) {
+            result.add(valuedJump.getJump());
         }
 
         return result;
     }
 
-    public boolean isMoveValid(AbstractJump move) {
-        if (!houses.get(move.getDestination().getId()).isEmpty()) {
+    public boolean isJumpValid(AbstractJump jump) {
+        if (!houses.get(jump.getDestination().getId()).isEmpty()) {
             return false;
         }
 
-        if (move.getSource().isEmpty()) {
-            if (houses.get(move.getDestination().getId()).getMan().getColor() != currentPlayer.getColor()) {
+        if (jump.getSource().isEmpty()) {
+            if (houses.get(jump.getDestination().getId()).getMan().getColor() != currentPlayer.getColor()) {
                 return false;
             }
             if ((howManyMenCurrentPlayer() > 3 || !IS_FLYING_ALLOWED)
-                    && !POSITION_TO_NEIGHBOURS.get(move.getSource().getId()).contains(move.getDestination().getId())) {
+                    && !POSITION_TO_NEIGHBOURS.get(jump.getSource().getId()).contains(jump.getDestination().getId())) {
                 return false;
             }
             if (getUnputPiecesOfCurrentPlayer() > 0) {
@@ -435,12 +435,12 @@ public class Board {
             }
         }
 
-        if (move instanceof RemoveMan) {
-            if (houses.get(move.getSource().getId()).getMan().getColor() != getOtherPlayer().getColor()) {
+        if (jump instanceof RemoveMan) {
+            if (houses.get(jump.getSource().getId()).getMan().getColor() != getOtherPlayer().getColor()) {
                 return false;
             }
 
-            return !isPieceFromMill(move.getSource().getId()) || areAllPiecesFromMill(getOtherPlayer());
+            return !isPieceFromMill(jump.getSource().getId()) || areAllPiecesFromMill(getOtherPlayer());
         }
 
         return true;

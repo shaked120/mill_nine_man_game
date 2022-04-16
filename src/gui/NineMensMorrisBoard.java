@@ -16,27 +16,27 @@ public class NineMensMorrisBoard extends JPanel {
 	private Board board;
 	private int positionSelected;
 	private boolean millFormed;
-	private AbstractJump move;
-	private MoveExecutorCallback moveExecutor;
-	private boolean doMakeMove;
+	private AbstractJump jump;
+	private JumpExecutorCallback jumpExecutor;
+	private boolean doMakeJump;
 	
 	public NineMensMorrisBoard() {
 		addMouseListener(new Controller());
 	}
 	
-	public void setBoard(Board board, MoveExecutorCallback moveExecutor) {
+	public void setBoard(Board board, JumpExecutorCallback jumpExecutor) {
 		this.board = board;
 		this.positionSelected = -1;
 		this.millFormed = false;
-		this.move = null;
-		this.moveExecutor = moveExecutor;
-		this.doMakeMove = false;
+		this.jump = null;
+		this.jumpExecutor = jumpExecutor;
+		this.doMakeJump = false;
 
 		repaint();
 	}
 	
-	public void makeMove() {
-		this.doMakeMove = true;
+	public void makeJump() {
+		this.doMakeJump = true;
 	}
 	
 	Point getPositionCoords(int position) {
@@ -87,15 +87,15 @@ public class NineMensMorrisBoard extends JPanel {
 		}
 
 		for (int i = 0; i < 24; i++) {
-			if (move != null && i == move.getSource().getId()) {
+			if (jump != null && i == jump.getSource().getId()) {
 				continue;
 			}
 
-			if (!board.getHouses().get(i).isEmpty() || (move != null && move.getDestination().getId() == i)) {
+			if (!board.getHouses().get(i).isEmpty() || (jump != null && jump.getDestination().getId() == i)) {
 				if (positionSelected == i) {
 					g.setColor(Color.RED);
 				} else if (board.getHouses().get(i).getMan().getColor() == Mill_project.Color.White
-						|| (move != null && move.getDestination().getId() == i && board.getCurrentPlayer().getColor() == Mill_project.Color.White)) {
+						|| (jump != null && jump.getDestination().getId() == i && board.getCurrentPlayer().getColor() == Mill_project.Color.White)) {
 					g.setColor(Color.WHITE);
 				} else {
 					g.setColor(Color.BLACK);
@@ -113,7 +113,7 @@ public class NineMensMorrisBoard extends JPanel {
 	private class Controller extends MouseAdapter {
 		@Override
 		public void mouseClicked(MouseEvent e) {
-			if (!doMakeMove || board.getCurrentPlayer().getColor() == Mill_project.Color.Black || board.hasCurrentPlayerLost()) {
+			if (!doMakeJump || board.getCurrentPlayer().getColor() == Mill_project.Color.Black || board.hasCurrentPlayerLost()) {
 				return;
 			}
 			
@@ -130,21 +130,21 @@ public class NineMensMorrisBoard extends JPanel {
 							boolean areAllOtherPlayerPiecesFromMill = board.areAllPiecesFromMill(board.getOtherPlayer());
 
 							if (areAllOtherPlayerPiecesFromMill || !board.doesPieceCompleteMill(-1, i, board.getOtherPlayer())) {
-								move = new RemoveMan(move.getSource());
-								if (board.isMoveValid(move)) {
-									moveExecutor.makeMove(move);
-									move = null;
+								jump = new RemoveMan(jump.getSource());
+								if (board.isJumpValid(jump)) {
+									jumpExecutor.makeJump(jump);
+									jump = null;
 									millFormed = false;
-									doMakeMove = false;
+									doMakeJump = false;
 								}									
 							}
 						}
 					} else {
 						if (board.getHouses().get(i).isEmpty()) {
 							if (positionSelected == -1) {
-								move = new RemoveMan(board.getHouses().get(i));
+								jump = new RemoveMan(board.getHouses().get(i));
 							} else {
-								move = new Jump(board.getHouses().get(positionSelected), board.getHouses().get(i));
+								jump = new Jump(board.getHouses().get(positionSelected), board.getHouses().get(i));
 							}
 						} else if (board.getHouses().get(i).getMan().getColor() == board.getCurrentPlayer().getColor()) {
 							if (positionSelected == -1) {
@@ -156,18 +156,18 @@ public class NineMensMorrisBoard extends JPanel {
 							}
 						}
 						
-						if (move != null) {
-							if (board.isMoveValid(move)) {
+						if (jump != null) {
+							if (board.isJumpValid(jump)) {
 								positionSelected = -1;
-								if (board.doesPieceCompleteMill(move.getSource().getId(), move.getDestination().getId(), board.getCurrentPlayer())) {
+								if (board.doesPieceCompleteMill(jump.getSource().getId(), jump.getDestination().getId(), board.getCurrentPlayer())) {
 									millFormed = true;
 								} else {
-									moveExecutor.makeMove(move);
-									move = null;
-									doMakeMove = false;
+									jumpExecutor.makeJump(jump);
+									jump = null;
+									doMakeJump = false;
 								}
 							} else {
-								move = null;
+								jump = null;
 							}
 						}
 					}

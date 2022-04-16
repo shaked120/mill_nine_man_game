@@ -3,14 +3,14 @@ package Mill_project;
 public final class BoardStateValue {
     private final int value;
     private final int remainingDepth;
-    private final AbstractJump foundBestMove;
+    private final AbstractJump foundBestJump;
     private final boolean hasBeenCut;
     private final boolean couldHaveBeenCutDeeper;
 
-    public BoardStateValue(int value, int remainingDepth, AbstractJump foundBestMove, boolean hasBeenCut, boolean couldHaveBeenCutDeeper) {
+    public BoardStateValue(int value, int remainingDepth, AbstractJump foundBestJump, boolean hasBeenCut, boolean couldHaveBeenCutDeeper) {
         this.value = value;
         this.remainingDepth = remainingDepth;
-        this.foundBestMove = foundBestMove;
+        this.foundBestJump = foundBestJump;
         this.hasBeenCut = hasBeenCut;
         this.couldHaveBeenCutDeeper = couldHaveBeenCutDeeper;
     }
@@ -21,7 +21,7 @@ public final class BoardStateValue {
         int result = 1;
         result = prime * result + (couldHaveBeenCutDeeper ? 1231 : 1237);
         result = prime * result
-                + ((foundBestMove == null) ? 0 : foundBestMove.hashCode());
+                + ((foundBestJump == null) ? 0 : foundBestJump.hashCode());
         result = prime * result + (hasBeenCut ? 1231 : 1237);
         result = prime * result + remainingDepth;
         result = prime * result + value;
@@ -43,11 +43,11 @@ public final class BoardStateValue {
         if (couldHaveBeenCutDeeper != other.couldHaveBeenCutDeeper) {
             return false;
         }
-        if (foundBestMove == null) {
-            if (other.foundBestMove != null) {
+        if (foundBestJump == null) {
+            if (other.foundBestJump != null) {
                 return false;
             }
-        } else if (!foundBestMove.equals(other.foundBestMove)) {
+        } else if (!foundBestJump.equals(other.foundBestJump)) {
             return false;
         }
         if (hasBeenCut != other.hasBeenCut) {
@@ -68,8 +68,8 @@ public final class BoardStateValue {
         return remainingDepth;
     }
 
-    public AbstractJump getFoundBestMove() {
-        return foundBestMove;
+    public AbstractJump getFoundBestJump() {
+        return foundBestJump;
     }
 
     public boolean hasBeenCut() {
