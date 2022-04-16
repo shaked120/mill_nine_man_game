@@ -2,6 +2,10 @@ package Mill_project;
 
 public class RemoveMan extends AbstractJump {
 
+    public RemoveMan (HouseInBoard src) {
+        super(src, true);
+    }
+
     //check if the move is valid.
     public boolean check(int src){
         if ( Board.getInstance().minHouseId <= src && src <= Board.getInstance().maxHouseId){

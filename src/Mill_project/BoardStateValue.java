@@ -3,11 +3,11 @@ package Mill_project;
 public final class BoardStateValue {
     private final int value;
     private final int remainingDepth;
-    private final Jump foundBestMove;
+    private final AbstractJump foundBestMove;
     private final boolean hasBeenCut;
     private final boolean couldHaveBeenCutDeeper;
 
-    public BoardStateValue(int value, int remainingDepth, Jump foundBestMove, boolean hasBeenCut, boolean couldHaveBeenCutDeeper) {
+    public BoardStateValue(int value, int remainingDepth, AbstractJump foundBestMove, boolean hasBeenCut, boolean couldHaveBeenCutDeeper) {
         this.value = value;
         this.remainingDepth = remainingDepth;
         this.foundBestMove = foundBestMove;
@@ -68,7 +68,7 @@ public final class BoardStateValue {
         return remainingDepth;
     }
 
-    public Jump getFoundBestMove() {
+    public AbstractJump getFoundBestMove() {
         return foundBestMove;
     }
 

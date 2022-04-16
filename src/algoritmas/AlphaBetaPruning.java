@@ -17,7 +17,7 @@ public class AlphaBetaPruning extends AbstractPlayer {
     private final int maxTime;
     private long startTime;
     private final Map<UUID, BoardStateValue> transpositionTable;
-    private Jump currentBestMove;
+    private AbstractJump currentBestMove;
     private int currentBestMoveValue;
     private final MoveEvaluationFunction moveEvaluationFunction;
     private Board currentBoard;
@@ -153,7 +153,7 @@ public class AlphaBetaPruning extends AbstractPlayer {
             }
         }
 
-        List<Jump> validMoves = currentBoard.getValidMoves(moveEvaluationFunction);
+        List<AbstractJump> validMoves = currentBoard.getValidMoves(moveEvaluationFunction);
         if (currentBoard.howManyMenCurrentPlayer() < 3 || validMoves.isEmpty()) {
             return -WIN_BOARD_VALUE;
         }
@@ -161,10 +161,10 @@ public class AlphaBetaPruning extends AbstractPlayer {
         if (remainingDepth == 0) {
             return evaluateCurrentBoard();
         } else {
-            Jump nodeBestMove = null;
+            AbstractJump nodeBestMove = null;
             int nodeBestValue = -INFINITY;
 
-            for (Jump move : validMoves) {
+            for (AbstractJump move : validMoves) {
                 currentBoard.makeMove(move);
 
                 int value = -alphaBetaPrunningSearch(-beta, -alpha, currentDepth + 1, remainingDepth -1);
@@ -200,14 +200,13 @@ public class AlphaBetaPruning extends AbstractPlayer {
         }
     }
 
-    public Jump searchForBestMove() {
+    public AbstractJump searchForBestMove() {
         currentBestMove = null;
         startTime = System.currentTimeMillis();
         currentBoard = new Board(board);
         currentBestMoveValue = -INFINITY;
-        Jump prevBestMove = currentBestMove;
+        AbstractJump prevBestMove = currentBestMove;
         int prevBestMoveValue = currentBestMoveValue;
-
 
         for (int depth = Math.min(2, maxDepth); depth <= maxDepth; depth += 2) {
             int value = alphaBetaPrunningSearch(-INFINITY, INFINITY, 0, depth);

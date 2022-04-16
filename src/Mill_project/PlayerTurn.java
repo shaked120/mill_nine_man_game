@@ -55,7 +55,7 @@ public class PlayerTurn {
             System.out.println("You can take an opponent man out. "
                     + "\nChoose a house that contains an opponent man:");
             src = MainGame.getInstance().currentTurn.readInt();
-            RemoveMan move = new RemoveMan();
+            RemoveMan move = new RemoveMan(Board.getInstance().getHouses().get(src));
             while (!move.check(src)) {
                 src = MainGame.getInstance().currentTurn.readInt();
             }

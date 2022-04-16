@@ -2,7 +2,7 @@ package Mill_project;
 
 public class SimpleMoveEvaluationFunction implements MoveEvaluationFunction {
 	@Override
-	public int evaluate(Board board, Jump jump) {
+	public int evaluate(Board board, AbstractJump jump) {
 		if (board.doesPieceCompleteMill(jump.getSource().getId(), jump.getDestination().getId(), board.getCurrentPlayer())) {
 			return 9;
 		}

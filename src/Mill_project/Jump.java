@@ -2,6 +2,12 @@ package Mill_project;
 
 public class Jump extends AbstractJump {
 
+    public Jump() {};
+
+    public Jump(HouseInBoard src, HouseInBoard dest) {
+        super(src, dest);
+    }
+
     //check if the jump is possible
     public boolean check(int src, int dest){
         if ( Board.getInstance().minHouseId <= dest && dest <=Board.getInstance().maxHouseId){

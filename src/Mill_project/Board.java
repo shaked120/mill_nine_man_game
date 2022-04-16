@@ -1,6 +1,7 @@
 package Mill_project;
 
 import algoritmas.AlphaBetaPruning;
+import algoritmas.ValuedMove;
 
 import java.util.*;
 
@@ -12,7 +13,7 @@ public class Board {
     public static final int NUMBER_OF_STARTING_PIECES = 9;
     public static final boolean IS_FLYING_ALLOWED = false;
 
-    private static final Board board = new Board();
+    private static Board board = new Board();
 
     public static final List<List<Integer>> POSSIBLE_MILLS;
     public static final List<List<Integer>> POSITION_TO_NEIGHBOURS;
@@ -107,6 +108,11 @@ public class Board {
         return board;
     }
 
+    public static Board clearBoard() {
+        board = new Board();
+        return board;
+    }
+
     public UUID getBoardID() {
         return boardID;
     }
@@ -131,6 +137,10 @@ public class Board {
         }
 
         return i;
+    }
+
+    public boolean hasCurrentPlayerLost() {
+        return howManyMenCurrentPlayer() < 3 || getValidMoves(null).isEmpty();
     }
 
     public int howManyMenCurrentPlayer() {
@@ -293,7 +303,7 @@ public class Board {
     }
 
     public boolean doesPieceCompleteMill(int removeFromPosition, int position, AbstractPlayer player) {
-        char positionState =  player.getToken();
+        char positionState = player.getToken();
 
         for (List<Integer> millCoords : POSSIBLE_MILLS) {
             if (millCoords.contains(position)) {
@@ -314,4 +324,134 @@ public class Board {
         return false;
     }
 
+    public boolean areAllPiecesFromMill(AbstractPlayer player) {
+        for (int i = 0; i < houses.size(); i++) {
+            if (houses.get(i).getMan().getColor() == player.getColor() && !doesPieceCompleteMill(-1, i, player)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private void addPossibleMillTakes(SortedSet<ValuedMove> sortedMoves,
+                                      AbstractJump move, MoveEvaluationFunction evaluationFunction) {
+        boolean areAllOtherPlayerPiecesFromMill = areAllPiecesFromMill(getOtherPlayer());
+
+        for (int i = 0; i < houses.size(); i++) {
+            if (houses.get(i).getMan().getColor() == getOtherPlayer().getColor()) {
+                if (areAllOtherPlayerPiecesFromMill || !doesPieceCompleteMill(-1, i, getOtherPlayer())) {
+                    move = new Jump(move.getSource(), move.getDestination());
+                    sortedMoves.add(new ValuedMove(move, evaluationFunction.evaluate(this, move)));
+                }
+            }
+        }
+    }
+
+    public int getUnputPiecesOfCurrentPlayer() {
+        return NUMBER_OF_STARTING_PIECES - soldiers.get(currentPlayer.getColor()).size();
+    }
+
+    public List<AbstractJump> getValidMoves(MoveEvaluationFunction evaluationFunction) {
+        if (evaluationFunction == null) {
+            evaluationFunction = (board, jump) -> 0;
+        }
+
+        SortedSet<ValuedMove> sortedMoves = new TreeSet<>();
+
+        if (getUnputPiecesOfCurrentPlayer() > 0) {
+            for (int i = 0; i < houses.size(); i++) {
+                if (houses.get(i).isEmpty()) {
+                    Jump move = new Jump();
+                    if (doesPieceCompleteMill(-1, i, currentPlayer)) {
+                        addPossibleMillTakes(sortedMoves, move, evaluationFunction);
+                    } else {
+                        sortedMoves.add(new ValuedMove(move, evaluationFunction.evaluate(this, move)));
+                    }
+                }
+            }
+        } else {
+            if (howManyMenCurrentPlayer() > 3 || !IS_FLYING_ALLOWED) {
+                for (int i = 0; i < houses.size(); i++) {
+                    if (houses.get(i).getMan().getColor() == currentPlayer.getColor()) {
+                        for (int neighbour : POSITION_TO_NEIGHBOURS.get(i)) {
+                            if (houses.get(neighbour).isEmpty()) {
+                                Jump move = new Jump(houses.get(i), houses.get(neighbour));
+                                if (doesPieceCompleteMill(i, neighbour, currentPlayer)) {
+                                    addPossibleMillTakes(sortedMoves, move, evaluationFunction);
+                                } else {
+                                    sortedMoves.add(new ValuedMove(move, evaluationFunction.evaluate(this, move)));
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                for (int i = 0; i < houses.size(); i++) {
+                    if (houses.get(i).getMan().getColor() == currentPlayer.getColor()) {
+                        for (int j = 0; j < houses.size(); j++) {
+                            if (houses.get(j).isEmpty()) {
+                                Jump move = new Jump(houses.get(i), houses.get(j));
+                                if (doesPieceCompleteMill(i, j, currentPlayer)) {
+                                    addPossibleMillTakes(sortedMoves, move, evaluationFunction);
+                                } else {
+                                    sortedMoves.add(new ValuedMove(move, evaluationFunction.evaluate(this, move)));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        List<AbstractJump> result = new ArrayList<>();
+
+        for (ValuedMove valuedMove : sortedMoves) {
+            result.add(valuedMove.getMove());
+        }
+
+        return result;
+    }
+
+    public boolean isMoveValid(AbstractJump move) {
+        if (!houses.get(move.getDestination().getId()).isEmpty()) {
+            return false;
+        }
+
+        if (move.getSource().isEmpty()) {
+            if (houses.get(move.getDestination().getId()).getMan().getColor() != currentPlayer.getColor()) {
+                return false;
+            }
+            if ((howManyMenCurrentPlayer() > 3 || !IS_FLYING_ALLOWED)
+                    && !POSITION_TO_NEIGHBOURS.get(move.getSource().getId()).contains(move.getDestination().getId())) {
+                return false;
+            }
+            if (getUnputPiecesOfCurrentPlayer() > 0) {
+                return false;
+            }
+        } else {
+            if (getUnputPiecesOfCurrentPlayer() == 0) {
+                return false;
+            }
+        }
+
+        if (move instanceof RemoveMan) {
+            if (houses.get(move.getSource().getId()).getMan().getColor() != getOtherPlayer().getColor()) {
+                return false;
+            }
+
+            return !isPieceFromMill(move.getSource().getId()) || areAllPiecesFromMill(getOtherPlayer());
+        }
+
+        return true;
+    }
+
+    public boolean isPieceFromMill(int position) {
+        if (!houses.get(position).isEmpty()) {
+            AbstractPlayer p = houses.get(position).getMan().getColor() == currentPlayer.getColor() ? currentPlayer : otherPlayer;
+            return doesPieceCompleteMill(-1, position, p);
+        }
+
+        return false;
+    }
 }
