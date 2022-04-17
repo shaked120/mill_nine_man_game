@@ -31,7 +31,6 @@ public class NineMensMorrisBoard extends JPanel {
 		this.jump = null;
 		this.jumpExecutor = jumpExecutor;
 		this.doMakeJump = false;
-
 		repaint();
 	}
 	
@@ -41,13 +40,11 @@ public class NineMensMorrisBoard extends JPanel {
 	
 	Point getPositionCoords(int position) {
 		Point result = new Point();
-
 		int margin = 30;
 		int width = getSize().width - 2 * margin;
 		int height = getSize().height - 2 * margin;
 		int metric = Math.min(width, height);
 		int positionSpace = metric / 6;
-		
 		int row = position / 3;
 		if (row < 3) {
 			result.x = row * positionSpace + (position % 3) * (metric - 2 * row * positionSpace) / 2;
@@ -62,17 +59,15 @@ public class NineMensMorrisBoard extends JPanel {
 			result.x = metric - point.x;
 			result.y = metric - point.y;
 		}
-		
 		result.x += margin;
 		result.y += margin;
-		
 		return result;
 	}
-	
+
+
 	@Override
 	protected void paintComponent(Graphics g) {
 		super.paintComponent(g);
-		
 		for (int i = 0; i < 24; i++) {
 			for (int j : Board.POSITION_TO_NEIGHBOURS.get(i)) {
 				Point start = getPositionCoords(i);
@@ -80,17 +75,14 @@ public class NineMensMorrisBoard extends JPanel {
 				g.drawLine(start.x, start.y, end.x, end.y);
 			}
 		}
-		
 		for (int i = 0; i < 24; i++) {
 			Point coords = getPositionCoords(i);
 			g.fillOval(coords.x - 5, coords.y - 5, 10, 10);
 		}
-
 		for (int i = 0; i < 24; i++) {
 			if (jump != null && i == jump.getSource().getId()) {
 				continue;
 			}
-
 			if (!board.getHouses().get(i).isEmpty() || (jump != null && jump.getDestination().getId() == i)) {
 				if (positionSelected == i) {
 					g.setColor(Color.RED);
@@ -100,35 +92,30 @@ public class NineMensMorrisBoard extends JPanel {
 				} else {
 					g.setColor(Color.BLACK);
 				}
-				
 				Point coords = getPositionCoords(i);
 				g.fillOval(coords.x - 20, coords.y - 20, 40, 40);
-				
 				g.setColor(Color.BLACK);
 				g.drawOval(coords.x - 20, coords.y - 20, 40, 40);
 			}
 		}
 	}
-	
+
+
 	private class Controller extends MouseAdapter {
 		@Override
 		public void mouseClicked(MouseEvent e) {
 			if (!doMakeJump || board.getCurrentPlayer().getColor() == Mill_project.Color.Black || board.hasCurrentPlayerLost()) {
 				return;
 			}
-			
 			int x = e.getX();
 			int y = e.getY();
-			
 			for (int i = 0; i < 24; i++) {
 				Point coords = getPositionCoords(i);
-				
 				if (coords.x - 20 <= x && x <= coords.x + 20
 						&& coords.y - 20 <= y && y <= coords.y + 20) {
 					if (millFormed) {
 						if (board.getHouses().get(i).getMan().getColor() == board.getOtherPlayer().getColor()) {
 							boolean areAllOtherPlayerPiecesFromMill = board.areAllPiecesFromMill(board.getOtherPlayer());
-
 							if (areAllOtherPlayerPiecesFromMill || !board.doesPieceCompleteMill(-1, i, board.getOtherPlayer())) {
 								jump = new RemoveMan(jump.getSource());
 								if (board.isJumpValid(jump)) {
@@ -155,7 +142,6 @@ public class NineMensMorrisBoard extends JPanel {
 								positionSelected = i;
 							}
 						}
-						
 						if (jump != null) {
 							if (board.isJumpValid(jump)) {
 								positionSelected = -1;
@@ -171,9 +157,7 @@ public class NineMensMorrisBoard extends JPanel {
 							}
 						}
 					}
-
 					repaint();
-					
 					break;
 				}
 			}

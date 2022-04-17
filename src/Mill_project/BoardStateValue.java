@@ -15,6 +15,7 @@ public final class BoardStateValue {
         this.couldHaveBeenCutDeeper = couldHaveBeenCutDeeper;
     }
 
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -27,6 +28,7 @@ public final class BoardStateValue {
         result = prime * result + value;
         return result;
     }
+
 
     @Override
     public boolean equals(Object obj) {
@@ -56,7 +58,6 @@ public final class BoardStateValue {
         if (remainingDepth != other.remainingDepth) {
             return false;
         }
-
         return value == other.value;
     }
 

@@ -10,6 +10,8 @@ public abstract class AbstractPlayer {
     public char getToken(){
         return color == null ? ' ' : color.toString().charAt(0);
     }
+
     public abstract int readInt();
+
     public Color getColor() {return this.color;}
 }

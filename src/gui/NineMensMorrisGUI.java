@@ -33,10 +33,8 @@ public class NineMensMorrisGUI extends JFrame {
 			if (terminate) {
 				return;
 			}
-
 			currentGame.makeJump(jump);
 			boardPanel.repaint();
-			
 			if (currentGame.hasCurrentPlayerLost()) {
 				if (currentGame.getCurrentPlayer().getColor() == Color.White) {
 					statusLabel.setText("You won!");
@@ -56,12 +54,12 @@ public class NineMensMorrisGUI extends JFrame {
 			}
 		}
 	}
-	
+
+
 	private void startNewGame() {
 		if (jumpExecutor != null) {
 			jumpExecutor.terminate();
 		}
-
 		currentGame = Board.clearBoard();
 		jumpExecutor = new JumpExecutor();
 		boardPanel.setBoard(currentGame, jumpExecutor);
@@ -70,14 +68,12 @@ public class NineMensMorrisGUI extends JFrame {
 		solver = (AlphaBetaPruning) currentGame.getOtherPlayer();
 		boardPanel.makeJump();
 	}
-	
+
+
 	public NineMensMorrisGUI() {
 		super("Nine Men's Morris");
-		
 		boardPanel = new NineMensMorrisBoard();
-		
 		add(boardPanel, BorderLayout.CENTER);
-
 		controls = new JPanel();
 		controls.setLayout(new FlowLayout());
 		newGameButton = new JButton("New game");
@@ -94,15 +90,13 @@ public class NineMensMorrisGUI extends JFrame {
 		controls.add(new JLabel("Status:"));
 		statusLabel = new JLabel("Your jump");
 		controls.add(statusLabel);
-		
 		add(controls, BorderLayout.SOUTH);
-		
 		startNewGame();
 	}
 
+
 	public static void main(String[] args) {
 		JFrame game = new NineMensMorrisGUI();
-		
 		game.setSize(600, 700);
 		game.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		game.setVisible(true);
