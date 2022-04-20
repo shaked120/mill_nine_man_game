@@ -14,8 +14,6 @@ public class NineMensMorrisGUI extends JFrame {
 	private final NineMensMorrisBoard boardPanel;
 	private JPanel controls;
 	private JButton newGameButton;
-	private JTextField maxTimeTextField;
-	private JTextField maxDepthTextField;
 	private final JLabel statusLabel;
 	private AlphaBetaPruning solver;
 	private volatile JumpExecutorCallback jumpExecutor;
@@ -79,14 +77,6 @@ public class NineMensMorrisGUI extends JFrame {
 		newGameButton = new JButton("New game");
 		newGameButton.addActionListener(e -> startNewGame());
 		controls.add(newGameButton);
-		controls.add(new JLabel("Max jump time:"));
-		maxTimeTextField = new JTextField(3);
-		maxTimeTextField.setText("30");
-		controls.add(maxTimeTextField);
-		controls.add(new JLabel("Max searching depth:"));
-		maxDepthTextField = new JTextField(3);
-		maxDepthTextField.setText("15");
-		controls.add(maxDepthTextField);
 		controls.add(new JLabel("Status:"));
 		statusLabel = new JLabel("Your jump");
 		controls.add(statusLabel);

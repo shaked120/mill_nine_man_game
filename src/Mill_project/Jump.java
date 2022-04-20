@@ -12,7 +12,7 @@ public class Jump extends AbstractJump {
     public boolean check(int src, int dest){
         if ( Board.getInstance().minHouseId <= dest && dest <=Board.getInstance().maxHouseId){
             if (Board.getInstance().getHouses().get(src).getMan().getColor()
-                    != MainGame.getInstance().currentTurn.getColor()){
+                    != Board.getInstance().getCurrentPlayer().getColor()){
                 System.out.println("Choose a house that belongs to you.");
                 return false;
             }

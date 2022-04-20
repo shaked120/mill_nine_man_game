@@ -77,6 +77,8 @@ public class Board {
     private AbstractPlayer currentPlayer;
     private AbstractPlayer otherPlayer;
     private final Map<Color, ArrayList<ManSoldier>> soldiers = new HashMap<>();
+    private final Map<Color, Integer> placedPiecesCounters = new HashMap<>();
+    private boolean isInsertMode;
 
     private Board(){
         boardID = UUID.randomUUID();
@@ -84,6 +86,9 @@ public class Board {
         otherPlayer = new AlphaBetaPruning(this, 5, 10, Color.Black);
         soldiers.put(Color.White, new ArrayList<>());
         soldiers.put(Color.Black, new ArrayList<>());
+        placedPiecesCounters.put(Color.White, 0);
+        placedPiecesCounters.put(Color.Black, 0);
+        isInsertMode = true;
     }
 
 
@@ -137,7 +142,7 @@ public class Board {
 
 
     public boolean hasCurrentPlayerLost() {
-        return howManyMenCurrentPlayer() < 3 || getValidJumps(null).isEmpty();
+        return getUnputPiecesOfCurrentPlayer() == 0 && (howManyMenCurrentPlayer() < 3 || getValidJumps(null).isEmpty());
     }
 
     public int howManyMenCurrentPlayer() {
@@ -268,6 +273,7 @@ public class Board {
             removeFromBoard(jump.getSource());
         }
         putOnBoard(jump.getDestination(), currentPlayer);
+        placedPiecesCounters.put(currentPlayer.color, placedPiecesCounters.get(currentPlayer.color) + 1);
         if (jump instanceof RemoveMan) {
             removeFromBoard(jump.getSource());
         }
@@ -281,6 +287,7 @@ public class Board {
             putOnBoard(jump.getSource(), currentPlayer);
         }
         removeFromBoard(jump.getDestination());
+        placedPiecesCounters.put(currentPlayer.color, placedPiecesCounters.get(currentPlayer.color) - 1);
         if (jump instanceof RemoveMan) {
             putOnBoard(jump.getSource(), otherPlayer);
         }
@@ -333,7 +340,7 @@ public class Board {
 
 
     public int getUnputPiecesOfCurrentPlayer() {
-        return NUMBER_OF_STARTING_PIECES - soldiers.get(currentPlayer.getColor()).size();
+        return NUMBER_OF_STARTING_PIECES - placedPiecesCounters.get(currentPlayer.getColor());
     }
     public List<AbstractJump> getValidJumps(JumpEvaluationFunction evaluationFunction) {
         if (evaluationFunction == null) {

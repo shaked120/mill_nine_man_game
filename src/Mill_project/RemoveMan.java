@@ -11,26 +11,20 @@ public class RemoveMan extends AbstractJump {
         if ( Board.getInstance().minHouseId <= src && src <= Board.getInstance().maxHouseId){
             //if the chosen house is empty or if the chosen man is same as player
             if (Board.getInstance().getHouses().get(src).getMan().getColor() == null){
-                System.out.println("Chosen house is empty. Choose another.");
                 return false;
             }
 
-            if (Board.getInstance().getHouses().get(src).getMan().getColor() == MainGame.getInstance().currentTurn.getColor()){
-                System.out.println("Chosen house contains your own man. Choose another.");
+            if (Board.getInstance().getHouses().get(src).getMan().getColor() == Board.getInstance().getCurrentPlayer().getColor()){
                 return false;
             }
             //if are all in mills, then the man can be removed
             if(!allMills() && MillCheck.checkMills(src)){
-                System.out.println("Chosen house contains a man that's already in a mill."
-                        + "\nYou can't remove that. Choose another");
                 return false;
             }
             source = Board.getInstance().getHouses().get(src);
             man = source.getMan();
             return true;
         }
-        else
-            System.out.println("Chosen destination is not on the board. Choose another");
         return false;
     }
 

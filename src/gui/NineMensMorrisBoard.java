@@ -31,6 +31,7 @@ public class NineMensMorrisBoard extends JPanel {
 		this.jump = null;
 		this.jumpExecutor = jumpExecutor;
 		this.doMakeJump = false;
+		this.board.setUp();
 		repaint();
 	}
 	
