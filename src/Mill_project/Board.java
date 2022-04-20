@@ -8,10 +8,12 @@ import java.util.*;
 public class Board {
     // UUID is unique identifier across all system (based on current millisecond)
     private final UUID boardID;
-    public static final int NUMBER_OF_POSITIONS = 24;
-    public static final int NUMBER_OF_STARTING_PIECES = 9;
-    public static final boolean IS_FLYING_ALLOWED = false;
+    private static final int NUMBER_OF_STARTING_PIECES = 9;
+    private static final boolean IS_FLYING_ALLOWED = false;
+    private static final int MAX_HOUSE_ID = 23;
+
     private static Board board = new Board();
+
     public static final List<List<Integer>> POSSIBLE_MILLS;
     public static final List<List<Integer>> POSITION_TO_NEIGHBOURS;
 
@@ -59,6 +61,7 @@ public class Board {
             {5, 13, 20},
             {2, 14, 23},
     };
+
     static {
         List<List<Integer>> posToNeigh = new ArrayList<>();
         for (Integer[] value : positionToNeighboursArray) {
@@ -73,12 +76,11 @@ public class Board {
         POSSIBLE_MILLS = Collections.unmodifiableList(possMills);
     }
 
-
     private AbstractPlayer currentPlayer;
     private AbstractPlayer otherPlayer;
     private final Map<Color, ArrayList<ManSoldier>> soldiers = new HashMap<>();
     private final Map<Color, Integer> placedPiecesCounters = new HashMap<>();
-    private boolean isInsertMode;
+    private final ArrayList<HouseInBoard> houses = new ArrayList<>();
 
     private Board(){
         boardID = UUID.randomUUID();
@@ -88,9 +90,7 @@ public class Board {
         soldiers.put(Color.Black, new ArrayList<>());
         placedPiecesCounters.put(Color.White, 0);
         placedPiecesCounters.put(Color.Black, 0);
-        isInsertMode = true;
     }
-
 
     private void togglePlayer() {
         AbstractPlayer temp = currentPlayer;
@@ -98,12 +98,14 @@ public class Board {
         otherPlayer = temp;
     }
 
-
     public Board(Board b) {
         boardID = UUID.randomUUID();
-        // copy constructor for alphabeta algo - need to copy fields
+        currentPlayer = b.currentPlayer;
+        otherPlayer = b.otherPlayer;
+        soldiers.putAll(b.soldiers);
+        placedPiecesCounters.putAll(b.placedPiecesCounters);
+        houses.addAll(b.houses);
     }
-
 
     public static Board getInstance(){
         return board;
@@ -117,10 +119,6 @@ public class Board {
     public UUID getBoardID() {
         return boardID;
     }
-
-    private final ArrayList<HouseInBoard> houses = new ArrayList<>();
-    public int minHouseId = 0;
-    public int maxHouseId = 23;
 
     public AbstractPlayer getCurrentPlayer() {
         return currentPlayer;
@@ -139,7 +137,6 @@ public class Board {
 
         return i;
     }
-
 
     public boolean hasCurrentPlayerLost() {
         return getUnputPiecesOfCurrentPlayer() == 0 && (howManyMenCurrentPlayer() < 3 || getValidJumps(null).isEmpty());
@@ -162,7 +159,7 @@ public class Board {
     }
 
     public void setUp(){
-        for (int i = 0; i <= maxHouseId; i++) {
+        for (int i = 0; i <= MAX_HOUSE_ID; i++) {
             houses.add(new HouseInBoard());
             houses.get(i).setId(i);
         }
@@ -259,35 +256,46 @@ public class Board {
     private void putOnBoard(HouseInBoard position, AbstractPlayer player) {
         ManSoldier m = new ManSoldier(player.color);
         m.setHouse(position);
+        position.setMan(m);
         soldiers.get(player.color).add(m);
     }
 
-
     private void removeFromBoard(HouseInBoard position) {
+        soldiers.get(currentPlayer.color).remove(position.getMan());
+        position.getMan().isOut = true;
         position.setMan(HouseInBoard.empty);
     }
-
 
     public void makeJump(AbstractJump jump) {
         if (jump.getSource() != null) {
             removeFromBoard(jump.getSource());
         }
+
         putOnBoard(jump.getDestination(), currentPlayer);
-        placedPiecesCounters.put(currentPlayer.color, placedPiecesCounters.get(currentPlayer.color) + 1);
+        if (jump instanceof PlaceMan) {
+            placedPiecesCounters.put(currentPlayer.color, placedPiecesCounters.get(currentPlayer.color) + 1);
+        }
+
         if (jump instanceof RemoveMan) {
             removeFromBoard(jump.getSource());
         }
+
         togglePlayer();
     }
 
 
     public void undoJump(AbstractJump jump) {
         togglePlayer();
+
         if (jump.getSource() != null) {
             putOnBoard(jump.getSource(), currentPlayer);
         }
+
         removeFromBoard(jump.getDestination());
-        placedPiecesCounters.put(currentPlayer.color, placedPiecesCounters.get(currentPlayer.color) - 1);
+        if (jump instanceof PlaceMan) {
+            placedPiecesCounters.put(currentPlayer.color, placedPiecesCounters.get(currentPlayer.color) - 1);
+        }
+
         if (jump instanceof RemoveMan) {
             putOnBoard(jump.getSource(), otherPlayer);
         }
@@ -338,10 +346,10 @@ public class Board {
         }
     }
 
-
     public int getUnputPiecesOfCurrentPlayer() {
         return NUMBER_OF_STARTING_PIECES - placedPiecesCounters.get(currentPlayer.getColor());
     }
+
     public List<AbstractJump> getValidJumps(JumpEvaluationFunction evaluationFunction) {
         if (evaluationFunction == null) {
             evaluationFunction = (board, jump) -> 0;
@@ -350,7 +358,7 @@ public class Board {
         if (getUnputPiecesOfCurrentPlayer() > 0) {
             for (int i = 0; i < houses.size(); i++) {
                 if (houses.get(i).isEmpty()) {
-                    Jump jump = new Jump();
+                    PlaceMan jump = new PlaceMan(houses.get(i));
                     if (doesPieceCompleteMill(-1, i, currentPlayer)) {
                         addPossibleMillTakes(sortedJumps, jump, evaluationFunction);
                     } else {
@@ -400,15 +408,20 @@ public class Board {
 
 
     public boolean isJumpValid(AbstractJump jump) {
-        if (!houses.get(jump.getDestination().getId()).isEmpty()) {
+        if (!houses.get(jump.getDestinationId()).isEmpty()) {
             return false;
         }
-        if (jump.getSource().isEmpty()) {
-            if (houses.get(jump.getDestination().getId()).getMan().getColor() != currentPlayer.getColor()) {
-                return false;
-            }
+
+        if (jump instanceof PlaceMan) {
+            return jump.getDestination().isEmpty();
+        }
+
+        if (!jump.getSource().isEmpty()) {
+//            if (houses.get(jump.getDestinationId()).getMan().getColor() != currentPlayer.getColor()) {
+//                return false;
+//            }
             if ((howManyMenCurrentPlayer() > 3 || !IS_FLYING_ALLOWED)
-                    && !POSITION_TO_NEIGHBOURS.get(jump.getSource().getId()).contains(jump.getDestination().getId())) {
+                    && !POSITION_TO_NEIGHBOURS.get(jump.getSourceId()).contains(jump.getDestinationId())) {
                 return false;
             }
             if (getUnputPiecesOfCurrentPlayer() > 0) {
@@ -419,12 +432,14 @@ public class Board {
                 return false;
             }
         }
+
         if (jump instanceof RemoveMan) {
-            if (houses.get(jump.getSource().getId()).getMan().getColor() != getOtherPlayer().getColor()) {
+            if (houses.get(jump.getSourceId()).getMan().getColor() != getOtherPlayer().getColor()) {
                 return false;
             }
-            return !isPieceFromMill(jump.getSource().getId()) || areAllPiecesFromMill(getOtherPlayer());
+            return !isPieceFromMill(jump.getSourceId()) || areAllPiecesFromMill(getOtherPlayer());
         }
+
         return true;
     }
 

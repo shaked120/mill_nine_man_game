@@ -1,12 +1,10 @@
 package gui;
 
-import Mill_project.AbstractJump;
-import Mill_project.Board;
-import Mill_project.Jump;
-import Mill_project.RemoveMan;
+import Mill_project.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.Color;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -65,7 +63,6 @@ public class NineMensMorrisBoard extends JPanel {
 		return result;
 	}
 
-
 	@Override
 	protected void paintComponent(Graphics g) {
 		super.paintComponent(g);
@@ -81,14 +78,14 @@ public class NineMensMorrisBoard extends JPanel {
 			g.fillOval(coords.x - 5, coords.y - 5, 10, 10);
 		}
 		for (int i = 0; i < 24; i++) {
-			if (jump != null && i == jump.getSource().getId()) {
+			if (jump != null && i == jump.getSourceId()) {
 				continue;
 			}
-			if (!board.getHouses().get(i).isEmpty() || (jump != null && jump.getDestination().getId() == i)) {
+			if (!board.getHouses().get(i).isEmpty()) {
 				if (positionSelected == i) {
 					g.setColor(Color.RED);
 				} else if (board.getHouses().get(i).getMan().getColor() == Mill_project.Color.White
-						|| (jump != null && jump.getDestination().getId() == i && board.getCurrentPlayer().getColor() == Mill_project.Color.White)) {
+						|| (jump != null && jump.getDestinationId() == i && board.getCurrentPlayer().getColor() == Mill_project.Color.White)) {
 					g.setColor(Color.WHITE);
 				} else {
 					g.setColor(Color.BLACK);
@@ -100,7 +97,6 @@ public class NineMensMorrisBoard extends JPanel {
 			}
 		}
 	}
-
 
 	private class Controller extends MouseAdapter {
 		@Override
@@ -130,7 +126,9 @@ public class NineMensMorrisBoard extends JPanel {
 					} else {
 						if (board.getHouses().get(i).isEmpty()) {
 							if (positionSelected == -1) {
-								jump = new RemoveMan(board.getHouses().get(i));
+								if (board.getUnputPiecesOfCurrentPlayer() > 0) {
+									jump = new PlaceMan(board.getHouses().get(i));
+								}
 							} else {
 								jump = new Jump(board.getHouses().get(positionSelected), board.getHouses().get(i));
 							}
@@ -146,7 +144,7 @@ public class NineMensMorrisBoard extends JPanel {
 						if (jump != null) {
 							if (board.isJumpValid(jump)) {
 								positionSelected = -1;
-								if (board.doesPieceCompleteMill(jump.getSource().getId(), jump.getDestination().getId(), board.getCurrentPlayer())) {
+								if (board.doesPieceCompleteMill(jump.getSourceId(), jump.getDestinationId(), board.getCurrentPlayer())) {
 									millFormed = true;
 								} else {
 									jumpExecutor.makeJump(jump);

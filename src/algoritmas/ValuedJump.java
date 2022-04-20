@@ -62,12 +62,12 @@ public class ValuedJump implements Comparable<ValuedJump>{
             return -1;
         } else if (jump.hashCode() > o.jump.hashCode()) {
             return 1;
-        } else if (jump.getSource().getId() - o.jump.getSource().getId() != 0) {
-            return jump.getSource().getId() - o.jump.getSource().getId();
-        } else if (jump.getDestination().getId() - o.jump.getDestination().getId() != 0) {
-            return jump.getDestination().getId() - o.jump.getDestination().getId();
+        } else if (jump.getSourceId() - o.jump.getSourceId() != 0) {
+            return jump.getSourceId() - o.jump.getSourceId();
+        } else if (jump.getDestinationId() - o.jump.getDestinationId() != 0) {
+            return jump.getDestinationId() - o.jump.getDestinationId();
         } else if (jump instanceof RemoveMan && o.jump instanceof RemoveMan) {
-            return jump.getSource().getId() - o.jump.getSource().getId();
+            return jump.getSourceId() - o.jump.getSourceId();
         } else {
             return 0;
         }

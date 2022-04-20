@@ -8,7 +8,7 @@ public class RemoveMan extends AbstractJump {
 
     //check if the move is valid.
     public boolean check(int src){
-        if ( Board.getInstance().minHouseId <= src && src <= Board.getInstance().maxHouseId){
+        if (MIN_HOUSE_ID <= src && src <= MAX_HOUSE_ID){
             //if the chosen house is empty or if the chosen man is same as player
             if (Board.getInstance().getHouses().get(src).getMan().getColor() == null){
                 return false;

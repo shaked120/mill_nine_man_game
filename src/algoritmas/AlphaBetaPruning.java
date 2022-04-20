@@ -11,6 +11,8 @@ public class AlphaBetaPruning extends AbstractPlayer {
     private static final int INFINITY = 1001;
     private static final int WIN_BOARD_VALUE = 1000;
     private static final int END_SEARCH = 10000;
+    private static final int NUMBER_OF_POSITIONS = 24;
+
     private final Board board;
     private final int maxDepth;
     private final int maxTime;
@@ -37,18 +39,9 @@ public class AlphaBetaPruning extends AbstractPlayer {
         currentBestJumpValue = -INFINITY;
     }
 
-    public void setBoard(Board board) {
-        this.currentBoard = board;
-    }
-
-    public Board getBoard() {
-        return currentBoard;
-    }
-
-
     private int getNumberOfAdjacentJumps(char playerToken) {
         int result = 0;
-        for (int i = 0; i < Board.NUMBER_OF_POSITIONS; i++) {
+        for (int i = 0; i < NUMBER_OF_POSITIONS; i++) {
             if (currentBoard.getHouses().get(i).getMan().getToken() == playerToken ) {
                 for (int j : Board.POSITION_TO_NEIGHBOURS.get(i)) {
                     if (currentBoard.getHouses().get(j).getMan().getToken() == 0) {
@@ -60,7 +53,6 @@ public class AlphaBetaPruning extends AbstractPlayer {
 
         return result;
     }
-
 
     private int getNumberOfMills(char playerToken) {
         int result = 0;
@@ -113,7 +105,7 @@ public class AlphaBetaPruning extends AbstractPlayer {
             }
         }
         List<AbstractJump> validJumps = currentBoard.getValidJumps(JumpEvaluationFunction);
-        if (currentBoard.howManyMenCurrentPlayer() < 3 || validJumps.isEmpty()) {
+        if (currentBoard.getUnputPiecesOfCurrentPlayer() == 0 && (currentBoard.howManyMenCurrentPlayer() < 3 || validJumps.isEmpty())) {
             return -WIN_BOARD_VALUE;
         }
         if (remainingDepth == 0) {
@@ -148,7 +140,6 @@ public class AlphaBetaPruning extends AbstractPlayer {
         }
     }
 
-
     public AbstractJump searchForBestJump() {
         currentBestJump = null;
         startTime = System.currentTimeMillis();
@@ -168,9 +159,9 @@ public class AlphaBetaPruning extends AbstractPlayer {
             prevBestJump = currentBestJump;
             prevBestJumpValue = value;
         }
+
         return currentBestJump;
     }
-
 
     public synchronized void terminateSearch() {
         doTerminateJump = true;

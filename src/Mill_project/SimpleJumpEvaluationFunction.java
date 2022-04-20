@@ -3,12 +3,12 @@ package Mill_project;
 public class SimpleJumpEvaluationFunction implements JumpEvaluationFunction {
 	@Override
 	public int evaluate(Board board, AbstractJump jump) {
-		if (board.doesPieceCompleteMill(jump.getSource().getId(), jump.getDestination().getId(), board.getCurrentPlayer())) {
+		if (board.doesPieceCompleteMill(jump.getSourceId(), jump.getDestinationId(), board.getCurrentPlayer())) {
 			return 9;
 		}
 		
-		if (board.doesPieceCompleteMill(jump.getSource().getId(), jump.getDestination().getId(), board.getOtherPlayer())) {
-			for (int neighbour : Board.POSITION_TO_NEIGHBOURS.get(jump.getDestination().getId())) {
+		if (board.doesPieceCompleteMill(jump.getSourceId(), jump.getDestinationId(), board.getOtherPlayer())) {
+			for (int neighbour : Board.POSITION_TO_NEIGHBOURS.get(jump.getDestinationId())) {
 				if (board.getHouses().get(neighbour).getMan().getToken() == board.getOtherPlayer().getToken() ) {
 					return 8;
 				}
@@ -17,8 +17,8 @@ public class SimpleJumpEvaluationFunction implements JumpEvaluationFunction {
 			return 4;
 		}
 		
-		if (board.doesPieceCompleteMill(-1, jump.getDestination().getId(), board.getOtherPlayer())) {
-			for (int neighbour : Board.POSITION_TO_NEIGHBOURS.get(jump.getDestination().getId())) {
+		if (board.doesPieceCompleteMill(-1, jump.getDestinationId(), board.getOtherPlayer())) {
+			for (int neighbour : Board.POSITION_TO_NEIGHBOURS.get(jump.getDestinationId())) {
 				if (board.getHouses().get(neighbour).getMan().getToken() == board.getOtherPlayer().getToken()) {
 					return -2;
 				}

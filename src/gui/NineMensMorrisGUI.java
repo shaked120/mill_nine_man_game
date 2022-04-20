@@ -12,8 +12,8 @@ public class NineMensMorrisGUI extends JFrame {
 	private static final long serialVersionUID = -514606427157467570L;
 	private Board currentGame;
 	private final NineMensMorrisBoard boardPanel;
-	private JPanel controls;
-	private JButton newGameButton;
+	private final JPanel controls;
+	private final JButton newGameButton;
 	private final JLabel statusLabel;
 	private AlphaBetaPruning solver;
 	private volatile JumpExecutorCallback jumpExecutor;
@@ -39,7 +39,7 @@ public class NineMensMorrisGUI extends JFrame {
 				} else {
 					statusLabel.setText("You lost!");
 				}
-			} else if (currentGame.getCurrentPlayer().getColor() == Color.White) {
+			} else if (currentGame.getCurrentPlayer().getColor() == Color.Black) {
 				statusLabel.setText("Making jump...");
 				
 				new Thread(() -> {
