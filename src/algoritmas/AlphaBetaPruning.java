@@ -20,7 +20,7 @@ public class AlphaBetaPruning extends AbstractPlayer {
     private final Map<UUID, BoardStateValue> transpositionTable;
     private AbstractJump currentBestJump;
     private int currentBestJumpValue;
-    private final JumpEvaluationFunction JumpEvaluationFunction;
+    private final JumpEvaluationFunction jumpEvaluationFunction;
     private Board currentBoard;
     private boolean doTerminateJump;
 
@@ -29,7 +29,7 @@ public class AlphaBetaPruning extends AbstractPlayer {
         this.board = boardState;
         this.maxDepth = maxDepth;
         this.maxTime = maxTime;
-        this.JumpEvaluationFunction = new SimpleJumpEvaluationFunction();
+        this.jumpEvaluationFunction = new SimpleJumpEvaluationFunction();
         this.transpositionTable = new HashMap<>();
         this.doTerminateJump = false;
 
@@ -104,7 +104,7 @@ public class AlphaBetaPruning extends AbstractPlayer {
                 return boardComputedValue.getValue();
             }
         }
-        List<AbstractJump> validJumps = currentBoard.getValidJumps(JumpEvaluationFunction);
+        List<AbstractJump> validJumps = currentBoard.getValidJumps(jumpEvaluationFunction);
         if (currentBoard.getUnputPiecesOfCurrentPlayer() == 0 && (currentBoard.howManyMenCurrentPlayer() < 3 || validJumps.isEmpty())) {
             return -WIN_BOARD_VALUE;
         }
@@ -114,7 +114,7 @@ public class AlphaBetaPruning extends AbstractPlayer {
             AbstractJump nodeBestJump = null;
             int nodeBestValue = -INFINITY;
             for (AbstractJump jump : validJumps) {
-                currentBoard.makeJump(jump);
+                currentBoard.makeJump(jump, true);
                 int value = -alphaBetaPrunningSearch(-beta, -alpha, currentDepth + 1, remainingDepth -1);
                 currentBoard.undoJump(jump);
                 if (Math.abs(value) == END_SEARCH) {
@@ -167,15 +167,7 @@ public class AlphaBetaPruning extends AbstractPlayer {
         doTerminateJump = true;
     }
 
-
-    @Override
-    public int readInt() {
-        return 0;
-    }
-
-
     public Color getColor() {
         return color;
     }
-
 }

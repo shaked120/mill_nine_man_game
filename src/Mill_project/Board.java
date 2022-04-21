@@ -92,7 +92,7 @@ public class Board {
         placedPiecesCounters.put(Color.Black, 0);
     }
 
-    private void togglePlayer() {
+    public void togglePlayer() {
         AbstractPlayer temp = currentPlayer;
         currentPlayer = otherPlayer;
         otherPlayer = temp;
@@ -102,8 +102,11 @@ public class Board {
         boardID = UUID.randomUUID();
         currentPlayer = b.currentPlayer;
         otherPlayer = b.otherPlayer;
+        soldiers.clear();
         soldiers.putAll(b.soldiers);
+        placedPiecesCounters.clear();
         placedPiecesCounters.putAll(b.placedPiecesCounters);
+        houses.clear();
         houses.addAll(b.houses);
     }
 
@@ -154,104 +157,12 @@ public class Board {
         return houses;
     }
 
-    public List<ManSoldier> getSoldiersCurrentPlayer() {
-        return soldiers.get(currentPlayer.getColor());
-    }
-
     public void setUp(){
         for (int i = 0; i <= MAX_HOUSE_ID; i++) {
             houses.add(new HouseInBoard());
             houses.get(i).setId(i);
         }
-        houses.get(0).setRight(houses.get(1));
-        houses.get(0).setDown(houses.get(9));
-//--------------------------------------------------- split every house
-        houses.get(1).setRight(houses.get(2));
-        houses.get(1).setLeft(houses.get(0));
-        houses.get(1).setDown(houses.get(4));
-//---------------------------------------------------
-        houses.get(2).setLeft(houses.get(1));
-        houses.get(2).setDown(houses.get(14));
-//---------------------------------------------------
-        houses.get(3).setRight(houses.get(4));
-        houses.get(3).setDown(houses.get(10));
-//---------------------------------------------------
-        houses.get(4).setLeft(houses.get(3));
-        houses.get(4).setRight(houses.get(5));
-        houses.get(4).setUp(houses.get(1));
-        houses.get(4).setDown(houses.get(7));
-//---------------------------------------------------
-        houses.get(5).setLeft(houses.get(4));
-        houses.get(5).setDown(houses.get(13));
-//---------------------------------------------------
-        houses.get(6).setRight(houses.get(7));
-        houses.get(6).setDown(houses.get(11));
-//---------------------------------------------------
-        houses.get(7).setLeft(houses.get(6));
-        houses.get(7).setRight(houses.get(8));
-        houses.get(7).setUp(houses.get(4));
-//---------------------------------------------------
-        houses.get(8).setLeft(houses.get(7));
-        houses.get(8).setDown(houses.get(12));
-//---------------------------------------------------
-        houses.get(9).setRight(houses.get(10));
-        houses.get(9).setUp(houses.get(0));
-        houses.get(9).setDown(houses.get(21));
-//---------------------------------------------------
-        houses.get(10).setRight(houses.get(11));
-        houses.get(10).setLeft(houses.get(9));
-        houses.get(10).setUp(houses.get(3));
-        houses.get(10).setDown(houses.get(18));
-//---------------------------------------------------
-        houses.get(11).setLeft(houses.get(10));
-        houses.get(11).setUp(houses.get(6));
-        houses.get(11).setDown(houses.get(15));
-//---------------------------------------------------
-        houses.get(12).setRight(houses.get(13));
-        houses.get(12).setUp(houses.get(8));
-        houses.get(12).setDown(houses.get(17));
-//---------------------------------------------------
-        houses.get(13).setRight(houses.get(14));
-        houses.get(13).setLeft(houses.get(12));
-        houses.get(13).setUp(houses.get(5));
-        houses.get(13).setDown(houses.get(20));
-//---------------------------------------------------
-        houses.get(14).setLeft(houses.get(13));
-        houses.get(14).setUp(houses.get(2));
-        houses.get(14).setDown(houses.get(23));
-//---------------------------------------------------
-        houses.get(15).setRight(houses.get(16));
-        houses.get(15).setUp(houses.get(11));
-//---------------------------------------------------
-        houses.get(16).setLeft(houses.get(15));
-        houses.get(16).setRight(houses.get(17));
-        houses.get(16).setDown(houses.get(19));
-//---------------------------------------------------
-        houses.get(17).setLeft(houses.get(16));
-        houses.get(17).setUp(houses.get(12));
-//---------------------------------------------------
-        houses.get(18).setRight(houses.get(19));
-        houses.get(18).setUp(houses.get(10));
-//---------------------------------------------------
-        houses.get(19).setRight(houses.get(20));
-        houses.get(19).setLeft(houses.get(18));
-        houses.get(19).setUp(houses.get(16));
-        houses.get(19).setDown(houses.get(22));
-//---------------------------------------------------
-        houses.get(20).setLeft(houses.get(19));
-        houses.get(20).setUp(houses.get(13));
-//---------------------------------------------------
-        houses.get(21).setRight(houses.get(22));
-        houses.get(21).setUp(houses.get(9));
-//---------------------------------------------------
-        houses.get(22).setRight(houses.get(23));
-        houses.get(22).setLeft(houses.get(21));
-        houses.get(22).setUp(houses.get(19));
-//---------------------------------------------------
-        houses.get(23).setLeft(houses.get(22));
-        houses.get(23).setUp(houses.get(14));
     }
-
 
     private void putOnBoard(HouseInBoard position, AbstractPlayer player) {
         ManSoldier m = new ManSoldier(player.color);
@@ -260,15 +171,16 @@ public class Board {
         soldiers.get(player.color).add(m);
     }
 
-    private void removeFromBoard(HouseInBoard position) {
-        soldiers.get(currentPlayer.color).remove(position.getMan());
-        position.getMan().isOut = true;
+    private void removeFromBoard(HouseInBoard position, AbstractPlayer player) {
+        ManSoldier man = position.getMan();
+        soldiers.get(player.color).removeIf(s -> s.getHouseId() == man.getHouseId());
+        man.isOut = true;
         position.setMan(HouseInBoard.empty);
     }
 
-    public void makeJump(AbstractJump jump) {
+    public void makeJump(AbstractJump jump, boolean togglePlayer) {
         if (jump.getSource() != null) {
-            removeFromBoard(jump.getSource());
+            removeFromBoard(jump.getSource(), currentPlayer);
         }
 
         putOnBoard(jump.getDestination(), currentPlayer);
@@ -277,12 +189,21 @@ public class Board {
         }
 
         if (jump instanceof RemoveMan) {
-            removeFromBoard(jump.getSource());
+            removeFromBoard(jump.getSource(), otherPlayer);
         }
 
-        togglePlayer();
-    }
+        if (jump instanceof AlgoJump) {
+            // created mill by algo + take piece when we at insert mode
+            if (jump.getSource() == null) {
+                placedPiecesCounters.put(currentPlayer.color, placedPiecesCounters.get(currentPlayer.color) + 1);
+            }
+            removeFromBoard(((AlgoJump) jump).getTakenPiece(), otherPlayer);
+        }
 
+        if (togglePlayer) {
+            togglePlayer();
+        }
+    }
 
     public void undoJump(AbstractJump jump) {
         togglePlayer();
@@ -291,7 +212,7 @@ public class Board {
             putOnBoard(jump.getSource(), currentPlayer);
         }
 
-        removeFromBoard(jump.getDestination());
+        removeFromBoard(jump.getDestination(), currentPlayer);
         if (jump instanceof PlaceMan) {
             placedPiecesCounters.put(currentPlayer.color, placedPiecesCounters.get(currentPlayer.color) - 1);
         }
@@ -299,17 +220,24 @@ public class Board {
         if (jump instanceof RemoveMan) {
             putOnBoard(jump.getSource(), otherPlayer);
         }
+
+        if (jump instanceof AlgoJump) {
+            // created mill by algo + take piece when we at insert mode
+            if (jump.getSource() == null) {
+                placedPiecesCounters.put(currentPlayer.color, placedPiecesCounters.get(currentPlayer.color) - 1);
+            }
+            putOnBoard(((AlgoJump) jump).getTakenPiece(), otherPlayer);
+        }
     }
 
     public boolean doesPieceCompleteMill(int removeFromPosition, int position, AbstractPlayer player) {
-        char positionState = player.getToken();
         for (List<Integer> millCoords : POSSIBLE_MILLS) {
             if (millCoords.contains(position)) {
                 boolean result = true;
                 for (int i : millCoords) {
                     if (i == removeFromPosition) {
                         result = false;
-                    } else if (i != position && houses.get(i).getMan().getToken() != positionState) {
+                    } else if (i != position && houses.get(i).getMan().getColor() != player.getColor()) {
                         result = false;
                     }
                 }
@@ -339,7 +267,7 @@ public class Board {
         for (int i = 0; i < houses.size(); i++) {
             if (houses.get(i).getMan().getColor() == getOtherPlayer().getColor()) {
                 if (areAllOtherPlayerPiecesFromMill || !doesPieceCompleteMill(-1, i, getOtherPlayer())) {
-                    jump = new Jump(jump.getSource(), jump.getDestination());
+                    jump = new AlgoJump(jump.getSource(), jump.getDestination(), houses.get(i));
                     sortedJumps.add(new ValuedJump(jump, evaluationFunction.evaluate(this, jump)));
                 }
             }
@@ -408,7 +336,7 @@ public class Board {
 
 
     public boolean isJumpValid(AbstractJump jump) {
-        if (!houses.get(jump.getDestinationId()).isEmpty()) {
+        if (!(jump instanceof RemoveMan) && !houses.get(jump.getDestinationId()).isEmpty()) {
             return false;
         }
 
@@ -417,9 +345,6 @@ public class Board {
         }
 
         if (!jump.getSource().isEmpty()) {
-//            if (houses.get(jump.getDestinationId()).getMan().getColor() != currentPlayer.getColor()) {
-//                return false;
-//            }
             if ((howManyMenCurrentPlayer() > 3 || !IS_FLYING_ALLOWED)
                     && !POSITION_TO_NEIGHBOURS.get(jump.getSourceId()).contains(jump.getDestinationId())) {
                 return false;
@@ -442,7 +367,6 @@ public class Board {
 
         return true;
     }
-
 
     public boolean isPieceFromMill(int position) {
         if (!houses.get(position).isEmpty()) {

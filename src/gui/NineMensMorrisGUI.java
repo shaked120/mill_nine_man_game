@@ -25,13 +25,13 @@ public class NineMensMorrisGUI extends JFrame {
 			this.terminate = true;
 			solver.terminateSearch();
 		}
-		
+
 		@Override
-		public synchronized void makeJump(AbstractJump jump) {
+		public synchronized void makeJump(AbstractJump jump, boolean togglePlayer) {
 			if (terminate) {
 				return;
 			}
-			currentGame.makeJump(jump);
+			currentGame.makeJump(jump, togglePlayer);
 			boardPanel.repaint();
 			if (currentGame.hasCurrentPlayerLost()) {
 				if (currentGame.getCurrentPlayer().getColor() == Color.White) {
@@ -41,7 +41,7 @@ public class NineMensMorrisGUI extends JFrame {
 				}
 			} else if (currentGame.getCurrentPlayer().getColor() == Color.Black) {
 				statusLabel.setText("Making jump...");
-				
+
 				new Thread(() -> {
 					AbstractJump jump1 = solver.searchForBestJump();
 					JumpExecutor.this.makeJump(jump1);
@@ -50,6 +50,24 @@ public class NineMensMorrisGUI extends JFrame {
 				statusLabel.setText("Your jump");
 				boardPanel.makeJump();
 			}
+		}
+
+		@Override
+		public synchronized void togglePlayer() {
+			currentGame.togglePlayer();
+			if (currentGame.getCurrentPlayer().getColor() == Color.Black) {
+				statusLabel.setText("Making jump...");
+
+				new Thread(() -> {
+					AbstractJump jump1 = solver.searchForBestJump();
+					JumpExecutor.this.makeJump(jump1);
+				}).start();
+			}
+		}
+
+		@Override
+		public synchronized void makeJump(AbstractJump jump) {
+			makeJump(jump, true);
 		}
 	}
 

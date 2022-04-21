@@ -17,8 +17,8 @@ public class ManSoldier {
         color = c;
     }
 
-    public HouseInBoard getHouse() {
-        return house;
+    public int getHouseId() {
+        return house == null ? -1 : house.getId();
     }
 
     public Color getColor() {

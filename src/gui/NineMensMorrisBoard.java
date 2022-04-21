@@ -114,9 +114,10 @@ public class NineMensMorrisBoard extends JPanel {
 						if (board.getHouses().get(i).getMan().getColor() == board.getOtherPlayer().getColor()) {
 							boolean areAllOtherPlayerPiecesFromMill = board.areAllPiecesFromMill(board.getOtherPlayer());
 							if (areAllOtherPlayerPiecesFromMill || !board.doesPieceCompleteMill(-1, i, board.getOtherPlayer())) {
-								jump = new RemoveMan(jump.getSource());
+								jump = new RemoveMan(board.getHouses().get(i));
 								if (board.isJumpValid(jump)) {
 									jumpExecutor.makeJump(jump);
+									jumpExecutor.togglePlayer();
 									jump = null;
 									millFormed = false;
 									doMakeJump = false;
@@ -144,10 +145,11 @@ public class NineMensMorrisBoard extends JPanel {
 						if (jump != null) {
 							if (board.isJumpValid(jump)) {
 								positionSelected = -1;
+								jumpExecutor.makeJump(jump, false);
 								if (board.doesPieceCompleteMill(jump.getSourceId(), jump.getDestinationId(), board.getCurrentPlayer())) {
 									millFormed = true;
 								} else {
-									jumpExecutor.makeJump(jump);
+									jumpExecutor.togglePlayer();
 									jump = null;
 									doMakeJump = false;
 								}

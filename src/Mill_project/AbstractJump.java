@@ -1,12 +1,8 @@
 package Mill_project;
 
 public abstract class AbstractJump {
-    protected ManSoldier man = null;
     protected HouseInBoard destination = null;
     protected HouseInBoard source = null;
-
-    protected static final int MIN_HOUSE_ID = 0;
-    protected static final int MAX_HOUSE_ID = 23;
 
     protected AbstractJump() {}
 
@@ -23,8 +19,6 @@ public abstract class AbstractJump {
         this.destination = dest;
     }
 
-    public abstract void exec();
-    public ManSoldier getMan(){return this.man;}
     public HouseInBoard getDestination(){return this.destination;}
     public HouseInBoard getSource(){return this.source;}
 
