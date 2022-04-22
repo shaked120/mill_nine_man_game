@@ -13,14 +13,16 @@ public class AlphaBetaPruning extends AbstractPlayer {
     private static final int END_SEARCH = 10000;
     private static final int NUMBER_OF_POSITIONS = 24;
 
+    // mapping the board state after each possible jump
+    private final Map<UUID, BoardStateValue> transpositionTable;
+    private final JumpEvaluationFunction jumpEvaluationFunction;
     private final Board board;
     private final int maxDepth;
     private final int maxTime;
+
     private long startTime;
-    private final Map<UUID, BoardStateValue> transpositionTable;
     private AbstractJump currentBestJump;
     private int currentBestJumpValue;
-    private final JumpEvaluationFunction jumpEvaluationFunction;
     private Board currentBoard;
     private boolean doTerminateJump;
 
@@ -39,10 +41,11 @@ public class AlphaBetaPruning extends AbstractPlayer {
         currentBestJumpValue = -INFINITY;
     }
 
+    // counting how many jumps are available
     private int getNumberOfAdjacentJumps(char playerToken) {
         int result = 0;
         for (int i = 0; i < NUMBER_OF_POSITIONS; i++) {
-            if (currentBoard.getHouses().get(i).getMan().getToken() == playerToken ) {
+            if (currentBoard.getHouses().get(i).getMan().getToken() == playerToken) {
                 for (int j : Board.POSITION_TO_NEIGHBOURS.get(i)) {
                     if (currentBoard.getHouses().get(j).getMan().getToken() == 0) {
                         result++;
@@ -54,6 +57,7 @@ public class AlphaBetaPruning extends AbstractPlayer {
         return result;
     }
 
+    // counting how many mills are on board
     private int getNumberOfMills(char playerToken) {
         int result = 0;
         millCordsLoop:
@@ -69,19 +73,20 @@ public class AlphaBetaPruning extends AbstractPlayer {
         return result;
     }
 
-
+    // scoring the board state
     private int evaluateCurrentBoard() {
         int result = 0;
 
         result += 10 * (currentBoard.howManyMenCurrentPlayer() - currentBoard.howManyMenOtherPlayer());
         result += 2 * (getNumberOfAdjacentJumps(currentBoard.getCurrentPlayer().getToken()) - getNumberOfAdjacentJumps(currentBoard.getOtherPlayer().getToken()));
         result += 8 * (getNumberOfMills(currentBoard.getCurrentPlayer().getToken()) - getNumberOfMills(currentBoard.getOtherPlayer().getToken()));
-        //result += 2 * (getNumberOfFormableMills(currentBoard.getCurrentPlayer()) - getNumberOfFormableMills(currentBoard.getOtherPlayer()));
+
         return result;
     }
 
     int hits = 0;
 
+    // search algo value
     private int alphaBetaPrunningSearch(int alpha, int beta, int currentDepth, int remainingDepth) {
         if ((System.currentTimeMillis() - startTime > maxTime && currentBestJump != null) || doTerminateJump) {
             doTerminateJump = false;

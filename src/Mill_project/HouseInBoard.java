@@ -1,7 +1,9 @@
 package Mill_project;
 
 public class HouseInBoard {
+    // empty placeholder for avoiding null pointer exception when house is empty
     public static final ManSoldier empty = new ManSoldier(null);
+
     private ManSoldier man = empty;
     private int id;
 

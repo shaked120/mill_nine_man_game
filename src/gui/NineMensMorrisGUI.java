@@ -10,13 +10,14 @@ import java.awt.*;
 
 public class NineMensMorrisGUI extends JFrame {
 	private static final long serialVersionUID = -514606427157467570L;
-	private Board currentGame;
+
 	private final NineMensMorrisBoard boardPanel;
-	private final JPanel controls;
-	private final JButton newGameButton;
 	private final JLabel statusLabel;
-	private AlphaBetaPruning solver;
+
 	private volatile JumpExecutorCallback jumpExecutor;
+
+	private Board currentGame;
+	private AlphaBetaPruning solver;
 
 	private class JumpExecutor implements JumpExecutorCallback {
 		private boolean terminate = false;
@@ -31,21 +32,15 @@ public class NineMensMorrisGUI extends JFrame {
 			if (terminate) {
 				return;
 			}
+
 			currentGame.makeJump(jump, togglePlayer);
 			boardPanel.repaint();
-			if (currentGame.hasCurrentPlayerLost()) {
-				if (currentGame.getCurrentPlayer().getColor() == Color.White) {
-					statusLabel.setText("You won!");
-				} else {
-					statusLabel.setText("You lost!");
-				}
-			} else if (currentGame.getCurrentPlayer().getColor() == Color.Black) {
-				statusLabel.setText("Making jump...");
 
-				new Thread(() -> {
-					AbstractJump jump1 = solver.searchForBestJump();
-					JumpExecutor.this.makeJump(jump1);
-				}).start();
+			if (currentGame.hasCurrentPlayerLost()) {
+				String text = currentGame.getCurrentPlayer().getColor() == Color.Black ? "You won!" : "You lost!";
+				statusLabel.setText(text);
+			} else if (currentGame.getCurrentPlayer().getColor() == Color.Black) {
+				runSolver();
 			} else {
 				statusLabel.setText("Your jump");
 				boardPanel.makeJump();
@@ -56,13 +51,14 @@ public class NineMensMorrisGUI extends JFrame {
 		public synchronized void togglePlayer() {
 			currentGame.togglePlayer();
 			if (currentGame.getCurrentPlayer().getColor() == Color.Black) {
-				statusLabel.setText("Making jump...");
-
-				new Thread(() -> {
-					AbstractJump jump1 = solver.searchForBestJump();
-					JumpExecutor.this.makeJump(jump1);
-				}).start();
+				runSolver();
 			}
+		}
+
+		private void runSolver() {
+			statusLabel.setText("Making jump...");
+
+			new Thread(() -> JumpExecutor.this.makeJump(solver.searchForBestJump())).start();
 		}
 
 		@Override
@@ -71,13 +67,14 @@ public class NineMensMorrisGUI extends JFrame {
 		}
 	}
 
-
 	private void startNewGame() {
 		if (jumpExecutor != null) {
 			jumpExecutor.terminate();
 		}
+
 		currentGame = Board.clearBoard();
 		jumpExecutor = new JumpExecutor();
+
 		boardPanel.setBoard(currentGame, jumpExecutor);
 		statusLabel.setText("Your jump");
 
@@ -85,23 +82,24 @@ public class NineMensMorrisGUI extends JFrame {
 		boardPanel.makeJump();
 	}
 
-
 	public NineMensMorrisGUI() {
 		super("Nine Men's Morris");
+
 		boardPanel = new NineMensMorrisBoard();
 		add(boardPanel, BorderLayout.CENTER);
-		controls = new JPanel();
+
+		JPanel controls = new JPanel();
 		controls.setLayout(new FlowLayout());
-		newGameButton = new JButton("New game");
+		JButton newGameButton = new JButton("New game");
 		newGameButton.addActionListener(e -> startNewGame());
 		controls.add(newGameButton);
 		controls.add(new JLabel("Status:"));
 		statusLabel = new JLabel("Your jump");
 		controls.add(statusLabel);
 		add(controls, BorderLayout.SOUTH);
+
 		startNewGame();
 	}
-
 
 	public static void main(String[] args) {
 		JFrame game = new NineMensMorrisGUI();

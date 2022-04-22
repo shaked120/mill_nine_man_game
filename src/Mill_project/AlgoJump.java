@@ -1,5 +1,6 @@
 package Mill_project;
 
+// used by algo player, combines jump and removing piece
 public class AlgoJump extends AbstractJump {
 
     private final HouseInBoard takenPiece;

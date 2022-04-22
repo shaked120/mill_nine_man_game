@@ -6,16 +6,20 @@ import algoritmas.ValuedJump;
 import java.util.*;
 
 public class Board {
+    // Universal Unique Identifier
     // UUID is unique identifier across all system (based on current millisecond)
     private final UUID boardID;
+
     private static final int NUMBER_OF_STARTING_PIECES = 9;
-    private static final boolean IS_FLYING_ALLOWED = false;
     private static final int MAX_HOUSE_ID = 23;
 
-    private static Board board = new Board();
-
+    // all possible mills in game (houses ids)
     public static final List<List<Integer>> POSSIBLE_MILLS;
+    // every house neighbours ids
     public static final List<List<Integer>> POSITION_TO_NEIGHBOURS;
+
+    // singleton instance
+    private static Board board = new Board();
 
     private static final Integer[][] positionToNeighboursArray = {
             {1, 9},
@@ -78,14 +82,16 @@ public class Board {
 
     private AbstractPlayer currentPlayer;
     private AbstractPlayer otherPlayer;
+    // dictionary of color's soldiers
     private final Map<Color, ArrayList<ManSoldier>> soldiers = new HashMap<>();
+    // this is for counting the placed pieces when we're at insert mode
     private final Map<Color, Integer> placedPiecesCounters = new HashMap<>();
     private final ArrayList<HouseInBoard> houses = new ArrayList<>();
 
     private Board(){
         boardID = UUID.randomUUID();
         currentPlayer = new HumanPlayer(Color.White);
-        otherPlayer = new AlphaBetaPruning(this, 5, 10, Color.Black);
+        otherPlayer = new AlphaBetaPruning(this, 10, 10, Color.Black);
         soldiers.put(Color.White, new ArrayList<>());
         soldiers.put(Color.Black, new ArrayList<>());
         placedPiecesCounters.put(Color.White, 0);
@@ -98,6 +104,7 @@ public class Board {
         otherPlayer = temp;
     }
 
+    // copy constructor for algo
     public Board(Board b) {
         boardID = UUID.randomUUID();
         currentPlayer = b.currentPlayer;
@@ -114,6 +121,7 @@ public class Board {
         return board;
     }
 
+    // for new game
     public static Board clearBoard() {
         board = new Board();
         return board;
@@ -131,6 +139,7 @@ public class Board {
         return otherPlayer;
     }
 
+    // counting how many soldiers the player has
     public int howManyMen(ArrayList<ManSoldier> men) {
         int i = 0;
         for (ManSoldier m : men) {
@@ -164,6 +173,7 @@ public class Board {
         }
     }
 
+    // put the piece in position by player's color
     private void putOnBoard(HouseInBoard position, AbstractPlayer player) {
         ManSoldier m = new ManSoldier(player.color);
         m.setHouse(position);
@@ -171,6 +181,7 @@ public class Board {
         soldiers.get(player.color).add(m);
     }
 
+    // remove the piece by the player's color
     private void removeFromBoard(HouseInBoard position, AbstractPlayer player) {
         ManSoldier man = position.getMan();
         soldiers.get(player.color).removeIf(s -> s.getHouseId() == man.getHouseId());
@@ -183,7 +194,10 @@ public class Board {
             removeFromBoard(jump.getSource(), currentPlayer);
         }
 
-        putOnBoard(jump.getDestination(), currentPlayer);
+        if (jump.getDestination() != null) {
+            putOnBoard(jump.getDestination(), currentPlayer);
+        }
+
         if (jump instanceof PlaceMan) {
             placedPiecesCounters.put(currentPlayer.color, placedPiecesCounters.get(currentPlayer.color) + 1);
         }
@@ -205,6 +219,7 @@ public class Board {
         }
     }
 
+    // undo jumps performed by the algo player when running the search for best move
     public void undoJump(AbstractJump jump) {
         togglePlayer();
 
@@ -212,7 +227,10 @@ public class Board {
             putOnBoard(jump.getSource(), currentPlayer);
         }
 
-        removeFromBoard(jump.getDestination(), currentPlayer);
+        if (jump.getDestination() != null) {
+            removeFromBoard(jump.getDestination(), currentPlayer);
+        }
+
         if (jump instanceof PlaceMan) {
             placedPiecesCounters.put(currentPlayer.color, placedPiecesCounters.get(currentPlayer.color) - 1);
         }
@@ -230,6 +248,7 @@ public class Board {
         }
     }
 
+    // check if the jump creates mill
     public boolean doesPieceCompleteMill(int removeFromPosition, int position, AbstractPlayer player) {
         for (List<Integer> millCoords : POSSIBLE_MILLS) {
             if (millCoords.contains(position)) {
@@ -250,7 +269,7 @@ public class Board {
         return false;
     }
 
-
+    // check if player has mill
     public boolean areAllPiecesFromMill(AbstractPlayer player) {
         for (int i = 0; i < houses.size(); i++) {
             if (houses.get(i).getMan().getColor() == player.getColor() && !doesPieceCompleteMill(-1, i, player)) {
@@ -260,7 +279,7 @@ public class Board {
         return true;
     }
 
-
+    // check for removing piece of other player after completing mill
     private void addPossibleMillTakes(SortedSet<ValuedJump> sortedJumps,
                                       AbstractJump jump, JumpEvaluationFunction evaluationFunction) {
         boolean areAllOtherPlayerPiecesFromMill = areAllPiecesFromMill(getOtherPlayer());
@@ -282,8 +301,10 @@ public class Board {
         if (evaluationFunction == null) {
             evaluationFunction = (board, jump) -> 0;
         }
+
         SortedSet<ValuedJump> sortedJumps = new TreeSet<>();
         if (getUnputPiecesOfCurrentPlayer() > 0) {
+            // insert mode
             for (int i = 0; i < houses.size(); i++) {
                 if (houses.get(i).isEmpty()) {
                     PlaceMan jump = new PlaceMan(houses.get(i));
@@ -295,7 +316,9 @@ public class Board {
                 }
             }
         } else {
-            if (howManyMenCurrentPlayer() > 3 || !IS_FLYING_ALLOWED) {
+            // jump mode
+            if (howManyMenCurrentPlayer() > 3) {
+                // regular jump
                 for (int i = 0; i < houses.size(); i++) {
                     if (houses.get(i).getMan().getColor() == currentPlayer.getColor()) {
                         for (int neighbour : POSITION_TO_NEIGHBOURS.get(i)) {
@@ -311,6 +334,7 @@ public class Board {
                     }
                 }
             } else {
+                // flying mode
                 for (int i = 0; i < houses.size(); i++) {
                     if (houses.get(i).getMan().getColor() == currentPlayer.getColor()) {
                         for (int j = 0; j < houses.size(); j++) {
@@ -327,35 +351,18 @@ public class Board {
                 }
             }
         }
+
         List<AbstractJump> result = new ArrayList<>();
         for (ValuedJump valuedJump : sortedJumps) {
             result.add(valuedJump.getJump());
         }
+
         return result;
     }
 
-
     public boolean isJumpValid(AbstractJump jump) {
-        if (!(jump instanceof RemoveMan) && !houses.get(jump.getDestinationId()).isEmpty()) {
-            return false;
-        }
-
         if (jump instanceof PlaceMan) {
             return jump.getDestination().isEmpty();
-        }
-
-        if (!jump.getSource().isEmpty()) {
-            if ((howManyMenCurrentPlayer() > 3 || !IS_FLYING_ALLOWED)
-                    && !POSITION_TO_NEIGHBOURS.get(jump.getSourceId()).contains(jump.getDestinationId())) {
-                return false;
-            }
-            if (getUnputPiecesOfCurrentPlayer() > 0) {
-                return false;
-            }
-        } else {
-            if (getUnputPiecesOfCurrentPlayer() == 0) {
-                return false;
-            }
         }
 
         if (jump instanceof RemoveMan) {
@@ -365,9 +372,23 @@ public class Board {
             return !isPieceFromMill(jump.getSourceId()) || areAllPiecesFromMill(getOtherPlayer());
         }
 
-        return true;
+        if (!houses.get(jump.getDestinationId()).isEmpty()) {
+            return false;
+        }
+
+        if (!jump.getSource().isEmpty()) {
+            // check if destination is not in neighbours, and we are not in flying mode (more than 3 pieces remaining)
+            if (howManyMenCurrentPlayer() > 3 && !POSITION_TO_NEIGHBOURS.get(jump.getSourceId()).contains(jump.getDestinationId())) {
+                return false;
+            }
+
+            return getUnputPiecesOfCurrentPlayer() == 0;
+        } else {
+            return getUnputPiecesOfCurrentPlayer() != 0;
+        }
     }
 
+    // check if position is part of mill
     public boolean isPieceFromMill(int position) {
         if (!houses.get(position).isEmpty()) {
             AbstractPlayer p = houses.get(position).getMan().getColor() == currentPlayer.getColor() ? currentPlayer : otherPlayer;
