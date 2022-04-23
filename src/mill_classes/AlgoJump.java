@@ -1,4 +1,4 @@
-package Mill_project;
+package mill_classes;
 
 // used by algo player, combines jump and removing piece
 public class AlgoJump extends AbstractJump {

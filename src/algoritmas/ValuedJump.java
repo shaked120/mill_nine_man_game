@@ -1,7 +1,7 @@
 package algoritmas;
 
-import Mill_project.AbstractJump;
-import Mill_project.RemoveMan;
+import mill_classes.AbstractJump;
+import mill_classes.RemoveMan;
 
 // how much each jump is valued
 public class ValuedJump implements Comparable<ValuedJump>{

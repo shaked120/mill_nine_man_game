@@ -1,6 +1,6 @@
 package gui;
-
-import Mill_project.AbstractJump;
+// interface that keep 4 functions for algo to use them
+import mill_classes.AbstractJump;
 
 public interface JumpExecutorCallback {
 	void makeJump(AbstractJump jump);
