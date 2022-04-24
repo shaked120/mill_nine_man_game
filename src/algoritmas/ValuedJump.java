@@ -48,10 +48,6 @@ public class ValuedJump implements Comparable<ValuedJump>{
         return jump;
     }
 
-    @SuppressWarnings("unused")
-    public int getValue() {
-        return value;
-    }
 
     @Override
     public int compareTo(ValuedJump o) {
