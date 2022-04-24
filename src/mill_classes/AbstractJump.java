@@ -5,7 +5,7 @@ public abstract class AbstractJump {
     protected HouseInBoard source = null;
 
     protected AbstractJump() {}
-
+//constructor for source
     protected AbstractJump(HouseInBoard h, boolean isSource) {
         if (isSource) {
             this.source = h;
@@ -13,7 +13,7 @@ public abstract class AbstractJump {
             this.destination = h;
         }
     }
-
+    //constructor for source and dest
     protected AbstractJump(HouseInBoard src, HouseInBoard dest) {
         this.source = src;
         this.destination = dest;
